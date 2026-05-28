@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Pallet Label – Filterbuy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+
+  :root {
+    --green: #008533;
+    --green-dark: #1A4A2E;
+    --green-mid: #2E7D4F;
+    --green-light: #D6EDE0;
+    --accent: #04AB47;
+    --white: #ffffff;
+    --gray-100: #f4f6f4;
+    --gray-200: #e2e8e2;
+    --gray-400: #8a9e8a;
+    --gray-700: #334433;
+    --dallas: #4A235A;
+    --dallas-light: #E8D5F5;
+    --orlando: #784212;
+    --orlando-light: #FAE5D3;
+    --elgin: #1A3A5C;
+    --elgin-light: #D6EAF8;
+    --talladega: #1A4A2E;
+    --talladega-light: #D6EDE0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 60px;
+  }
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    width: 100%;
+    max-width: 720px;
+  }
+  .logo-wrap {
+    background: var(--green);
+    border-radius: 6px;
+    padding: 8px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+  }
+  .logo-wrap .logo-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+  .logo-wrap .logo-tag {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .page-title-block h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    color: var(--green-dark);
+    line-height: 1;
+    letter-spacing: 0.5px;
+  }
+  .page-title-block p {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-top: 3px;
+    font-weight: 500;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+    padding: 28px 28px 24px;
+    width: 100%;
+    max-width: 720px;
+    box-shadow: 0 2px 12px rgba(0,80,30,0.07);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 20px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--green-mid);
+    margin-bottom: 5px;
+  }
+  input, select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 6px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 15px;
+    color: var(--gray-700);
+    background: var(--white);
+    transition: border-color .15s, box-shadow .15s;
+    outline: none;
+  }
+  input:focus, select:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(0,133,51,0.12);
+  }
+
+  .section-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    border-bottom: 1px solid var(--gray-200);
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+    grid-column: 1 / -1;
+  }
+
+  .copies-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .copies-row input[type=number] { width: 80px; }
+  .copies-note { font-size: 12px; color: var(--gray-400); }
+
+  /* Sheet log status banner */
+  .log-status {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .log-status.sending  { display:block; background:#FFF9E6; color:#856404; border:1px solid #FFE082; }
+  .log-status.success  { display:block; background:#E8F5E9; color:#1B5E20; border:1px solid #A5D6A7; }
+  .log-status.error    { display:block; background:#FFEBEE; color:#B71C1C; border:1px solid #EF9A9A; }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 22px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 11px 26px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary   { background: var(--green); color: var(--white); }
+  .btn-primary:hover { opacity: .88; }
+  .btn-secondary { background: var(--gray-200); color: var(--gray-700); }
+  .btn-secondary:hover { background: #d0d9d0; }
+  .btn-log {
+    background: var(--green-dark);
+    color: var(--white);
+  }
+  .btn-log:hover { opacity: .88; }
+
+  /* ── Preview layout — label left, checks right ── */
+  .preview-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .check-column {
+    display: flex;
+    flex-direction: column;
+    padding-left: 14px;
+    padding-top: 0;
+  }
+
+  /* Spacer matches label header band + destination banner height (~108px) */
+  .check-spacer-top { height: 108px; flex-shrink: 0; }
+
+  /* Each check zone stretches to match label section height */
+  .check-zone {
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    border-left: 3px solid var(--gray-200);
+    transition: border-color .15s;
+  }
+  .check-zone:has(input:checked) { border-left-color: var(--green); }
+
+  /* Spacer matches label header band only (~58px) */
+  .check-spacer-top { height: 58px; flex-shrink: 0; }
+
+  /* Zone heights matched to label sections */
+  #zone-destination { height: 52px; }   /* dest banner */
+  #zone-production  { height: 84px; }   /* info grid */
+  #zone-product     { height: 90px; }   /* SKU/MERV hero */
+  #zone-quantity    { height: 74px; }   /* qty row */
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-row input[type=checkbox] { display: none; }
+  .check-box {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    border: 2px solid var(--gray-200);
+    border-radius: 5px;
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color .15s, background .15s;
+  }
+  .check-row input[type=checkbox]:checked + .check-box {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .check-row input[type=checkbox]:checked + .check-box::after {
+    content: '✓';
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    line-height: 1;
+  }
+  .check-zone-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+  }
+  .check-zone:has(input:checked) .check-zone-label { color: var(--green-dark); }
+
+  /* ── Buttons centered below ── */
+  .confirm-btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    justify-content: center;
+    width: 100%;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .btn-confirm {
+    flex: 1;
+    background: var(--gray-200);
+    color: var(--gray-400);
+    cursor: not-allowed;
+  }
+  .btn-confirm.ready {
+    background: var(--green-dark);
+    color: var(--white);
+    cursor: pointer;
+  }
+  .btn-confirm.ready:hover { opacity: .88; }
+  .btn-confirm.done {
+    background: var(--green);
+    color: var(--white);
+    cursor: default;
+  }
+  .btn-print-log {
+    flex: 1;
+    background: var(--gray-200);
+    color: var(--gray-400);
+    cursor: not-allowed;
+  }
+  .btn-print-log.ready {
+    background: var(--green-mid);
+    color: var(--white);
+    cursor: pointer;
+  }
+  .btn-print-log.ready:hover { opacity: .88; }
+
+  #preview-section {
+    margin-top: 28px;
+    width: 100%;
+    max-width: 720px;
+    display: none;
+  }
+
+  #preview-section.visible { display: block; }
+  .preview-header {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .preview-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--gray-200);
+  }
+
+  /* 4"×6" label at 96dpi = 384×576px */
+  .label-wrap { display: flex; gap: 16px; flex-wrap: wrap; }
+  .label {
+    width: 384px;
+    height: 576px;
+    border: 3px solid #000;
+    background: #fff;
+    font-family: 'Barlow Condensed', sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0,0,0,.18);
+    color: #000;
+  }
+
+  .lbl-header {
+    background: #000;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px 6px;
+    flex-shrink: 0;
+    border-bottom: 3px solid #000;
+  }
+  .lbl-logo { display: flex; flex-direction: column; line-height: 1; }
+  .lbl-logo-text { font-weight: 800; font-size: 21px; letter-spacing: 1.5px; text-transform: uppercase; }
+  .lbl-logo-tag  { font-size: 7.5px; font-weight: 600; letter-spacing: 2px; opacity: .85; text-transform: uppercase; margin-top: 1px; }
+  .lbl-type { text-align: right; line-height: 1.1; }
+  .lbl-type-title { font-weight: 800; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; }
+  .lbl-type-sub   { font-size: 9px; letter-spacing: 1.5px; opacity: .85; text-transform: uppercase; }
+
+  .lbl-dest {
+    padding: 6px 12px 5px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 30px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #000;
+    background: #fff;
+    border-bottom: 3px solid #000;
+    flex-shrink: 0;
+  }
+
+  .lbl-body { flex: 1; display: flex; flex-direction: column; padding: 8px 12px 6px; gap: 6px; }
+
+  .lbl-hero { display: flex; align-items: stretch; gap: 0; border: 2.5px solid #000; }
+  .lbl-sku  { flex: 1; padding: 6px 10px 5px; border-right: 2.5px solid #000; }
+  .lbl-field-micro { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #444; line-height: 1; margin-bottom: 1px; }
+  .lbl-sku-val { font-weight: 800; font-size: 42px; line-height: 1; color: #000; letter-spacing: .5px; }
+  .lbl-merv-badge {
+    background: #000; color: #fff;
+    padding: 6px 12px 5px;
+    text-align: center; min-width: 76px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .lbl-merv-badge .lbl-field-micro { color: rgba(255,255,255,.8); }
+  .lbl-merv-val { font-weight: 800; font-size: 38px; line-height: 1; }
+
+  .lbl-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 2.5px solid #000; margin-bottom: 6px; }
+  .lbl-field { background: #fff; padding: 5px 8px 4px; border-right: 1.5px solid #000; border-bottom: 1.5px solid #000; }
+  .lbl-field:nth-child(even) { border-right: none; }
+  .lbl-field:nth-last-child(-n+2) { border-bottom: none; }
+  .lbl-field.full { grid-column: 1 / -1; border-right: none; }
+  .lbl-field-val { font-weight: 700; font-size: 19px; line-height: 1.15; color: #000; }
+  .lbl-field-val.large { font-size: 22px; }
+
+  .lbl-qty-row {
+    margin-top: 4px; background: #fff; border: 3px solid #000;
+    padding: 5px 10px;
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .lbl-qty-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #333; }
+  .lbl-qty-val   { font-weight: 800; font-size: 54px; color: #000; line-height: 1; letter-spacing: 1px; }
+  .lbl-qty-unit  { font-size: 11px; color: #333; font-weight: 700; letter-spacing: 1px; text-align: right; line-height: 1.4; text-transform: uppercase; }
+
+  .lbl-footer {
+    background: #fff; border-top: 2px solid #000;
+    padding: 3px 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 8.5px; color: #000; font-weight: 700; letter-spacing: .5px; flex-shrink: 0;
+  }
+
+  .lbl-mixed-block { border: 2.5px solid #000; margin-bottom: 6px; overflow: hidden; }
+  .lbl-mixed-header {
+    background: #000; color: #fff;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 10px; font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  }
+  .lbl-mixed-cols { font-size: 8px; opacity: .8; }
+  .lbl-mixed-row {
+    display: grid; grid-template-columns: 16px 1fr 56px 64px;
+    gap: 0; padding: 4px 10px; align-items: center;
+    border-bottom: 1px solid #000; font-size: 13px; font-weight: 700;
+  }
+  .lbl-mixed-row:last-child { border-bottom: none; }
+  .lbl-mixed-idx  { font-size: 9px; color: #666; font-weight: 700; }
+  .lbl-mixed-sku  { font-size: 16px; font-weight: 800; }
+  .lbl-mixed-merv { text-align: center; font-size: 12px; font-weight: 700; background: #000; color: #fff; border-radius: 3px; padding: 2px 4px; margin: 0 4px; }
+  .lbl-mixed-qty  { text-align: right; font-size: 14px; font-weight: 800; }
+
+  .lbl-barcode {
+    border-top: 2px solid #000; padding: 5px 10px 3px;
+    background: #fff; flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .lbl-barcode canvas { display: block; image-rendering: pixelated; }
+  .lbl-barcode-text { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 2px; color: #000; text-transform: uppercase; }
+
+  .print-mode-row {
+    display: flex; align-items: center; gap: 0;
+    border: 1.5px solid var(--gray-200); border-radius: 6px; overflow: hidden; width: fit-content;
+  }
+  .pm-btn {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px;
+    letter-spacing: .8px; text-transform: uppercase; padding: 8px 16px;
+    border: none; background: var(--white); color: var(--gray-400);
+    cursor: pointer; transition: background .12s, color .12s;
+  }
+  .pm-btn.active { background: var(--green); color: var(--white); }
+  .pm-divider { width: 1px; background: var(--gray-200); align-self: stretch; }
+
+  .sku-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px 14px; align-items: end;
+    background: var(--gray-100); border: 1.5px solid var(--gray-200);
+    border-radius: 7px; padding: 12px 14px 10px; margin-bottom: 8px; position: relative;
+  }
+  .sku-row-num {
+    position: absolute; top: 8px; left: 10px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; color: var(--green-mid); text-transform: uppercase;
+  }
+  .sku-row label { color: var(--green-mid); }
+  .btn-remove-sku {
+    background: none; border: 1.5px solid var(--gray-200); border-radius: 5px;
+    color: var(--gray-400); font-size: 16px; line-height: 1; padding: 6px 10px;
+    cursor: pointer; transition: border-color .12s, color .12s; align-self: end;
+  }
+  .btn-remove-sku:hover { border-color: #c0392b; color: #c0392b; }
+  .sku-add-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .btn-add-sku {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px;
+    letter-spacing: .8px; text-transform: uppercase; padding: 8px 16px;
+    border-radius: 6px; border: 1.5px dashed var(--green);
+    background: none; color: var(--green); cursor: pointer; transition: background .12s, color .12s;
+  }
+  .btn-add-sku:hover { background: var(--green-light); }
+  .btn-add-sku:disabled { opacity: .4; cursor: default; border-style: solid; }
+  .sku-count-note { font-size: 12px; color: var(--gray-400); }
+
+  #print-area { display: none; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="logo-wrap">
+    <span class="logo-text">filterbuy</span>
+    <span class="logo-tag">Better Air For All</span>
+  </div>
+  <div class="page-title-block">
+    <h1>Master Pallet Label</h1>
+    <p>4" × 6" Zebra Thermal · Internal Use Only</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="form-grid">
+
+    <div class="section-label">Production Info</div>
+
+    <div>
+      <label>Manufacture Date</label>
+      <input type="date" id="mfg-date">
+    </div>
+    <div>
+      <label>Shift</label>
+      <select id="shift">
+        <option value="Day">Day</option>
+        <option value="Night" selected>Night</option>
+      </select>
+    </div>
+    <div>
+      <label>Line</label>
+      <select id="line">
+        <option value="1">Line 1</option>
+        <option value="2">Line 2</option>
+        <option value="3">Line 3</option>
+        <option value="4">Line 4</option>
+        <option value="5">Line 5</option>
+        <option value="6">Line 6</option>
+        <option value="7">Line 7</option>
+        <option value="8">Line 8</option>
+        <option value="9">Line 9</option>
+        <option value="10">Line 10</option>
+        <option value="11">Line 11</option>
+        <option value="12">Line 12</option>
+        <option value="13">Line 13</option>
+        <option value="14">Line 14</option>
+        <option value="15">Line 15</option>
+        <option value="16">Line 16</option>
+        <option value="17">Line 17</option>
+        <option value="18">Line 18</option>
+        <option value="19">Line 19</option>
+        <option value="20">Line 20</option>
+      </select>
+    </div>
+    <div>
+      <label>Inspected By</label>
+      <input type="text" id="inspected-by" placeholder="Name or badge ID">
+    </div>
+
+    <div class="section-label">Product</div>
+
+    <div class="full" id="sku-rows-container"></div>
+    <div class="full sku-add-row">
+      <button class="btn-add-sku" id="btn-add-sku" onclick="addSkuRow()" type="button">+ Add SKU Line</button>
+      <span class="sku-count-note" id="sku-count-note"></span>
+    </div>
+
+    <div class="section-label">Destination</div>
+
+    <div>
+      <label>Destination DC</label>
+      <select id="dest">
+        <option value="DALLAS_DC" selected>DALLAS_DC</option>
+        <option value="ORLANDO_DC">ORLANDO_DC</option>
+        <option value="ELGIN_DC">ELGIN_DC</option>
+        <option value="TALLADEGA_DC">TALLADEGA_DC</option>
+      </select>
+    </div>
+    <div></div>
+
+    <div class="section-label">Print Options</div>
+
+    <div>
+      <label>Copies</label>
+      <div class="copies-row">
+        <input type="number" id="copies" value="1" min="1" max="20">
+        <span class="copies-note">label(s)</span>
+      </div>
+    </div>
+    <div>
+      <label>Printer Type</label>
+      <div class="print-mode-row">
+        <button class="pm-btn active" id="pm-office" onclick="setPrintMode('office')">&#128438; Office (8.5&times;11)</button>
+        <div class="pm-divider"></div>
+        <button class="pm-btn" id="pm-zebra" onclick="setPrintMode('zebra')">&#9632; Zebra (4&times;6)</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generatePreview()">Preview Label</button>
+    <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+  </div>
+</div>
+
+<div id="preview-section">
+  <div class="preview-header">Label Preview</div>
+
+  <!-- Label + checkboxes side by side -->
+  <div class="preview-layout">
+    <div class="label-wrap" id="label-wrap"></div>
+
+    <div class="check-column">
+      <!-- Spacer matches label header band only (~58px) -->
+      <div class="check-spacer-top"></div>
+
+      <!-- Checkbox 1 — aligns with Destination banner -->
+      <div class="check-zone" id="zone-destination">
+        <label class="check-row">
+          <input type="checkbox" id="chk-destination" onchange="updateConfirmState()">
+          <span class="check-box"></span>
+          <span class="check-zone-label">Destination</span>
+        </label>
+      </div>
+
+      <!-- Checkbox 2 — aligns with info grid (Mfg Date / Line / Shift / Inspected By) -->
+      <div class="check-zone" id="zone-production">
+        <label class="check-row">
+          <input type="checkbox" id="chk-production" onchange="updateConfirmState()">
+          <span class="check-box"></span>
+          <span class="check-zone-label">Production Info</span>
+        </label>
+      </div>
+
+      <!-- Checkbox 3 — aligns with SKU / MERV hero -->
+      <div class="check-zone" id="zone-product">
+        <label class="check-row">
+          <input type="checkbox" id="chk-product" onchange="updateConfirmState()">
+          <span class="check-box"></span>
+          <span class="check-zone-label">Pallet Contents</span>
+        </label>
+      </div>
+
+      <!-- Checkbox 4 — aligns with Qty row -->
+      <div class="check-zone" id="zone-quantity">
+        <label class="check-row">
+          <input type="checkbox" id="chk-quantity" onchange="updateConfirmState()">
+          <span class="check-box"></span>
+          <span class="check-zone-label">Quantity</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buttons centered below -->
+  <div class="confirm-btn-row">
+    <button class="btn btn-confirm" id="btn-confirm" onclick="confirmPallet()" disabled>✔ Confirm Pallet</button>
+    <button class="btn btn-print-log" id="btn-print-log" onclick="printAndLog()" disabled>🖨 Print &amp; Log to Inventory</button>
+  </div>
+  <div class="log-status" id="log-status"></div>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+  // ── Config ───────────────────────────────────────────────────────
+  const SCRIPT_URL = 'https://script.google.com/a/macros/filterbuy.com/s/AKfycbzZv8dRDWcKx8hVtF0HNLR8R32PgP6YDIt6fW_MneEbcVEm7UrYyUSunO49CBgMmk4e6g/exec';
+
+  // ── Init ─────────────────────────────────────────────────────────
+  window.addEventListener('DOMContentLoaded', function(){
+    const d = new Date();
+    document.getElementById('mfg-date').value = d.toISOString().split('T')[0];
+
+    // Restore saved Shift and Destination
+    const savedShift = localStorage.getItem('mpl_shift');
+    const savedDest  = localStorage.getItem('mpl_dest');
+    const savedLine  = localStorage.getItem('mpl_line');
+    if (savedShift) document.getElementById('shift').value = savedShift;
+    if (savedDest)  document.getElementById('dest').value  = savedDest;
+    if (savedLine)  document.getElementById('line').value  = savedLine;
+
+    // Save on change
+    document.getElementById('shift').addEventListener('change', function(){ localStorage.setItem('mpl_shift', this.value); });
+    document.getElementById('dest').addEventListener('change',  function(){ localStorage.setItem('mpl_dest',  this.value); });
+    document.getElementById('line').addEventListener('change',  function(){ localStorage.setItem('mpl_line',  this.value); });
+
+    addSkuRow();
+  });
+
+  function fmtDate(isoDate) {
+    if (!isoDate) return '—';
+    const [y, m, d] = isoDate.split('-');
+    return `${y}/${m}/${d}`;
+  }
+
+  function fmtDateShort(isoDate) {
+    if (!isoDate) return '';
+    const [y, m, d] = isoDate.split('-');
+    return `${m}${d}${y.slice(2)}`; // MMDDYY
+  }
+
+  let _labelIdx = 0;
+  let _currentBcVal = null; // shared barcode value for current print/log session
+
+  // ── Checkbox confirm state ───────────────────────────────────────
+  function updateConfirmState() {
+    const allChecked = document.getElementById('chk-destination').checked &&
+                       document.getElementById('chk-production').checked &&
+                       document.getElementById('chk-product').checked &&
+                       document.getElementById('chk-quantity').checked;
+    const btn = document.getElementById('btn-confirm');
+    btn.disabled = !allChecked;
+    btn.classList.toggle('ready', allChecked);
+  }
+
+  function confirmPallet() {
+    const btn = document.getElementById('btn-confirm');
+    btn.classList.remove('ready');
+    btn.classList.add('done');
+    btn.textContent = '✔ Pallet Confirmed';
+    btn.disabled = true;
+
+    const printLog = document.getElementById('btn-print-log');
+    printLog.disabled = false;
+    printLog.classList.add('ready');
+  }
+
+  // ── Print & Log combined ─────────────────────────────────────────
+  async function printAndLog() {
+    const statusEl = document.getElementById('log-status');
+    const inspectedBy = document.getElementById('inspected-by').value.trim();
+
+    if (!inspectedBy) {
+      statusEl.className = 'log-status error';
+      statusEl.textContent = '⚠ Please enter an Inspected By name or badge ID before printing.';
+      return;
+    }
+    if (!_currentBcVal) {
+      statusEl.className = 'log-status error';
+      statusEl.textContent = '⚠ No pallet ID found. Please preview the label again.';
+      return;
+    }
+
+    // Print first
+    printLabels();
+
+    // Then log to sheet
+    statusEl.className = 'log-status sending';
+    statusEl.textContent = '⏳ Logging to Inventory…';
+
+    const data = getData();
+    const results = [];
+
+    for (const sku of data.skuLines) {
+      const payload = {
+        action:      'logBatch',
+        sku:         sku.sku,
+        merv:        'M' + sku.merv,
+        qty:         sku.qty,
+        date:        fmtDateShort(data.mfgDate),
+        shift:       data.shift,
+        line:        data.line,
+        palletID:    _currentBcVal,
+        inspectedBy: inspectedBy,
+      };
+      try {
+        const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const json = await res.json();
+        results.push(json.status);
+      } catch (err) {
+        results.push('error');
+      }
+    }
+
+    if (results.every(r => r === 'ok')) {
+      statusEl.className = 'log-status success';
+      statusEl.textContent = `✅ Logged to Inventory — Pallet ID: ${_currentBcVal}. Resetting for next pallet…`;
+      setTimeout(() => resetForm(), 2500);
+    } else {
+      statusEl.className = 'log-status error';
+      statusEl.textContent = '⚠ One or more SKU lines failed to log. Check your connection and try again.';
+    }
+  }
+
+  // ── Sheet logging (standalone — kept for reference) ──────────────
+  async function logToSheet() {
+    // Redirects to printAndLog in new workflow
+    await printAndLog();
+  }
+
+  // ── Label builder ────────────────────────────────────────────────
+  function buildLabel(data, skuOverride) {
+    const isMaster = !skuOverride;
+    const destDisplay = data.dest.replace('_', ' ');
+    const now = new Date().toLocaleString('en-US', { month:'2-digit', day:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const bcId  = 'bc-' + (++_labelIdx);
+    const bcVal = isMaster ? (data._masterBcVal || genBarcodeVal()) : (data._masterBcVal || genBarcodeVal());
+
+    let heroHtml = '';
+    if (!data.isMixed || !isMaster) {
+      const s = skuOverride || data.skuLines[0];
+      heroHtml = `
+    <div class="lbl-hero">
+      <div class="lbl-sku">
+        <div class="lbl-field-micro">Size / SKU</div>
+        <div class="lbl-sku-val">${s.sku}</div>
+      </div>
+      <div class="lbl-merv-badge">
+        <div class="lbl-field-micro">MERV</div>
+        <div class="lbl-merv-val">${s.merv}</div>
+      </div>
+    </div>`;
+    } else {
+      const rows = data.skuLines.map((s, i) => `
+        <div class="lbl-mixed-row">
+          <span class="lbl-mixed-idx">${i+1}</span>
+          <span class="lbl-mixed-sku">${s.sku}</span>
+          <span class="lbl-mixed-merv">M${s.merv}</span>
+          <span class="lbl-mixed-qty">${s.qty.toLocaleString()}</span>
+        </div>`).join('');
+      heroHtml = `
+    <div class="lbl-mixed-block">
+      <div class="lbl-mixed-header">
+        <span>MIXED PALLET</span>
+        <span class="lbl-mixed-cols">SKU &nbsp;·&nbsp; MERV &nbsp;·&nbsp; QTY</span>
+      </div>
+      ${rows}
+    </div>`;
+    }
+
+    const displayQty = skuOverride ? skuOverride.qty : data.qty;
+    const qtyLabel   = data.isMixed && isMaster ? 'Total Qty — All SKUs' : 'Total Quantity';
+    const labelType  = !data.isMixed ? 'Master Pallet' : (isMaster ? 'Combined Master' : 'SKU Label');
+    const labelSub   = !data.isMixed ? `Internal · ${data.shift} Shift` :
+                       (isMaster ? `Mixed · ${data.skuLines.length} SKUs · ${data.shift} Shift` :
+                                   `${skuOverride.sku} · ${data.shift} Shift`);
+
+    const inspectedBy = document.getElementById('inspected-by').value.trim();
+
+    const html = `
+<div class="label">
+  <div class="lbl-header">
+    <div class="lbl-logo">
+      <span class="lbl-logo-text">filterbuy</span>
+      <span class="lbl-logo-tag">Better Air For All</span>
+    </div>
+    <div class="lbl-type">
+      <div class="lbl-type-title">${labelType}</div>
+      <div class="lbl-type-sub">${labelSub}</div>
+    </div>
+  </div>
+
+  <div class="lbl-dest">${destDisplay}</div>
+
+  <div class="lbl-body">
+    <div class="lbl-info-grid">
+      <div class="lbl-field">
+        <div class="lbl-field-micro">Manufacture Date</div>
+        <div class="lbl-field-val large">${fmtDate(data.mfgDate)}</div>
+      </div>
+      <div class="lbl-field">
+        <div class="lbl-field-micro">Line</div>
+        <div class="lbl-field-val large">Line ${data.line}</div>
+      </div>
+      <div class="lbl-field">
+        <div class="lbl-field-micro">Shift</div>
+        <div class="lbl-field-val">${data.shift}</div>
+      </div>
+      <div class="lbl-field">
+        <div class="lbl-field-micro">Inspected By</div>
+        <div class="lbl-field-val">${inspectedBy || '—'}</div>
+      </div>
+    </div>
+
+    ${heroHtml}
+
+    <div class="lbl-qty-row">
+      <div>
+        <div class="lbl-qty-label">${qtyLabel}</div>
+        <div class="lbl-qty-val">${parseInt(displayQty).toLocaleString()}</div>
+      </div>
+      <div class="lbl-qty-unit">FILTERS<br>PER PALLET</div>
+    </div>
+  </div>
+
+  ${isMaster ? `
+  <div class="lbl-barcode">
+    <canvas id="${bcId}" height="52"></canvas>
+    <div class="lbl-barcode-text">${bcVal}</div>
+  </div>` : `
+  <div class="lbl-barcode" style="justify-content:center;padding:10px 10px 8px;">
+    <div style="font-weight:800;font-size:18px;letter-spacing:3px;color:#000;text-transform:uppercase;text-align:center;">MIXED PALLET</div>
+    <div style="font-size:8px;font-weight:700;letter-spacing:1.5px;color:#555;text-transform:uppercase;margin-top:2px;">Individual SKU Label</div>
+  </div>`}
+
+  <div class="lbl-footer">
+    <span>${labelType.toUpperCase()} LABEL</span>
+    <span>Printed ${now}</span>
+  </div>
+</div>`;
+
+    if (isMaster) {
+      requestAnimationFrame(() => {
+        const canvas = document.getElementById(bcId);
+        if (canvas) drawCode128(canvas, bcVal);
+      });
+    }
+
+    return html;
+  }
+
+  // ── Barcode value generator ──────────────────────────────────────
+  function genBarcodeVal() {
+    const d = new Date();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const yy = String(d.getFullYear()).slice(2);
+    const dest = document.getElementById('dest').value;
+    const dc = dest.includes('DALLAS') ? 'DAL' :
+               dest.includes('ORLANDO') ? 'ORL' :
+               dest.includes('ELGIN') ? 'ELG' : 'TAL';
+    const seq = String(Math.floor(Math.random()*999)+1).padStart(3,'0');
+    return `FB-${mm}${dd}${yy}-${dc}-${seq}`;
+  }
+
+  // ── Code 128B encoder ────────────────────────────────────────────
+  const C128B_SYMS = [
+    '11011001100','11001101100','11001100110','10010011000','10010001100',
+    '10001001100','10011001000','10011000100','10001100100','11001001000',
+    '11001000100','11000100100','10110011100','10011011100','10011001110',
+    '10111001100','10011101100','10011100110','11001110010','11001011100',
+    '11001001110','11011100100','11001110100','11101101110','11101001100',
+    '11100101100','11100100110','11101100100','11100110100','11100110010',
+    '11011011000','11011000110','11000110110','10100011000','10001011000',
+    '10001000110','10110001000','10001101000','10001100010','11010001000',
+    '11000101000','11000100010','10110111000','10110001110','10001101110',
+    '10111011000','10111000110','10001110110','11101110110','11010001110',
+    '11000101110','11011101000','11011100010','11011101110','11101011000',
+    '11101000110','11100010110','11010111000','11010001110','11000010110',
+    '11010100000','11010010000','11010000100','11010000010','11001010000',
+    '11110101000','11110100010','11110001010','10111010000','10111000010',
+    '10001111010','10100111100','10010111100','10010011110','10111100100',
+    '10011110100','10011110010','11110100100','11110010100','11110010010',
+    '11011011110','11011110110','11110110110','10101111000','10100011110',
+    '10001011110','10111101000','10111100010','11110101110','11110001110',
+    '10011010000','10011010111','10111010111','11110111010','11100010010',
+    '11001010111','11110111000','10011101110','11100101110','11101011110',
+    '11110101100','11110100110','10011011110','10110011110','10101111100',
+    '11010000110','11000111010',
+  ];
+  const C128B_CHARS = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f';
+
+  function drawCode128(canvas, text) {
+    const START_B = 104, STOP = 106;
+    const indices = [START_B];
+    let checksum = START_B;
+    for (let i = 0; i < text.length; i++) {
+      const ci = C128B_CHARS.indexOf(text[i]);
+      const si = ci < 0 ? 0 : ci;
+      indices.push(si);
+      checksum += si * (i + 1);
+    }
+    indices.push(checksum % 103);
+    indices.push(STOP);
+    const QUIET = '0000000000';
+    let bits = QUIET;
+    for (const idx of indices) bits += C128B_SYMS[idx] || '11010101110';
+    bits += '11' + QUIET;
+    const mw = Math.max(1, Math.floor((canvas.parentElement.clientWidth - 20) / bits.length));
+    canvas.width = bits.length * mw;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000';
+    for (let i = 0; i < bits.length; i++) {
+      if (bits[i] === '1') ctx.fillRect(i * mw, 0, mw, canvas.height - 8);
+    }
+  }
+
+  // ── SKU row management ───────────────────────────────────────────
+  const MAX_SKU_ROWS = 6;
+  let _skuRowCount = 0;
+
+  function addSkuRow(sku = '', merv = '8', qty = '') {
+    if (_skuRowCount >= MAX_SKU_ROWS) return;
+    _skuRowCount++;
+    const id = _skuRowCount;
+    const container = document.getElementById('sku-rows-container');
+    const row = document.createElement('div');
+    row.className = 'sku-row';
+    row.dataset.rowId = id;
+    row.innerHTML = `
+      <span class="sku-row-num">SKU ${id}</span>
+      <div style="padding-top:14px;">
+        <label>Size / SKU</label>
+        <input type="text" class="sku-input" placeholder="-- x -- x -">
+      </div>
+      <div style="padding-top:14px;">
+        <label>MERV Rating</label>
+        <select class="merv-input">
+          <option value="" disabled selected>MERV --</option>
+          <option value="8">MERV 8</option>
+          <option value="8HC">MERV 8HC</option>
+          <option value="11">MERV 11</option>
+          <option value="11HC">MERV 11HC</option>
+          <option value="13">MERV 13</option>
+          <option value="OE">O.E.</option>
+        </select>
+      </div>
+      <div style="padding-top:14px;">
+        <label>Quantity</label>
+        <input type="number" class="qty-input" min="1" placeholder="------">
+      </div>
+      <button class="btn-remove-sku" onclick="removeSkuRow(this)" type="button" title="Remove this SKU">✕</button>
+    `;
+    container.appendChild(row);
+    updateSkuUI();
+  }
+
+  function removeSkuRow(btn) {
+    btn.closest('.sku-row').remove();
+    _skuRowCount--;
+    document.querySelectorAll('.sku-row').forEach((r, i) => {
+      r.querySelector('.sku-row-num').textContent = 'SKU ' + (i + 1);
+    });
+    updateSkuUI();
+  }
+
+  function updateSkuUI() {
+    const count = document.querySelectorAll('.sku-row').length;
+    _skuRowCount = count;
+    const addBtn = document.getElementById('btn-add-sku');
+    const note   = document.getElementById('sku-count-note');
+    addBtn.disabled = count >= MAX_SKU_ROWS;
+    note.textContent = count >= MAX_SKU_ROWS ? 'Max 6 SKU lines reached' :
+                       count > 1 ? `${count} SKU lines · ${MAX_SKU_ROWS - count} remaining` :
+                       'Add up to 5 more SKU lines for a mixed pallet';
+    document.querySelectorAll('.sku-row').forEach(r => {
+      r.querySelector('.btn-remove-sku').style.visibility = count === 1 ? 'hidden' : 'visible';
+    });
+  }
+
+  function getSkuLines() {
+    return Array.from(document.querySelectorAll('.sku-row')).map(row => ({
+      sku:  row.querySelector('.sku-input').value.trim() || '—',
+      merv: row.querySelector('.merv-input').value,
+      qty:  parseInt(row.querySelector('.qty-input').value) || 0,
+    }));
+  }
+
+  function getData() {
+    const skuLines = getSkuLines();
+    return {
+      mfgDate:  document.getElementById('mfg-date').value,
+      shift:    document.getElementById('shift').value,
+      line:     document.getElementById('line').value || '1',
+      skuLines,
+      sku:      skuLines.map(s => s.sku).join(' / '),
+      merv:     skuLines.length === 1 ? skuLines[0].merv : 'MIXED',
+      qty:      skuLines.reduce((a, s) => a + s.qty, 0),
+      isMixed:  skuLines.length > 1,
+      dest:     document.getElementById('dest').value,
+      copies:   parseInt(document.getElementById('copies').value) || 1,
+    };
+  }
+
+  function generatePreview() {
+    _labelIdx = 0;
+    const data = getData();
+    data._masterBcVal = genBarcodeVal();
+    _currentBcVal = data._masterBcVal; // store for log button
+
+    const wrap = document.getElementById('label-wrap');
+    wrap.innerHTML = '';
+
+    for (let i = 0; i < Math.min(data.copies, 2); i++) {
+      wrap.insertAdjacentHTML('beforeend', buildLabel(data));
+      if (data.isMixed) {
+        data.skuLines.forEach(s => wrap.insertAdjacentHTML('beforeend', buildLabel(data, s)));
+      }
+    }
+    redrawAllBarcodes(wrap);
+
+    const totalLabels = data.copies * (data.isMixed ? 1 + data.skuLines.length : 1);
+    if (data.copies > 2) {
+      const note = document.createElement('p');
+      note.style.cssText = 'color:#8a9e8a;font-size:12px;margin-top:8px;width:100%;';
+      note.textContent = `Showing ${data.isMixed ? '1 set' : '2 copies'} of ${data.copies}. All ${totalLabels} label(s) will print.`;
+      wrap.appendChild(note);
+    } else if (data.isMixed) {
+      const note = document.createElement('p');
+      note.style.cssText = 'color:#2E7D4F;font-size:12px;margin-top:8px;width:100%;font-weight:600;';
+      note.textContent = `Mixed pallet: 1 Combined Master + ${data.skuLines.length} individual SKU label(s) per copy = ${totalLabels} total label(s).`;
+      wrap.appendChild(note);
+    }
+
+    // Reset confirm card for new preview
+    document.getElementById('chk-destination').checked = false;
+    document.getElementById('chk-production').checked = false;
+    document.getElementById('chk-product').checked = false;
+    document.getElementById('chk-quantity').checked = false;
+    const btnConfirm = document.getElementById('btn-confirm');
+    btnConfirm.disabled = true;
+    btnConfirm.classList.remove('ready','done');
+    btnConfirm.textContent = '✔ Confirm Pallet';
+    const btnPrintLog = document.getElementById('btn-print-log');
+    btnPrintLog.disabled = true;
+    btnPrintLog.classList.remove('ready');
+
+    // Reset log status on new preview
+    const statusEl = document.getElementById('log-status');
+    statusEl.className = 'log-status';
+    statusEl.textContent = '';
+
+    const sec = document.getElementById('preview-section');
+    sec.style.display = 'block';
+    sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Print ────────────────────────────────────────────────────────
+  let _printMode = 'office';
+
+  function setPrintMode(mode) {
+    _printMode = mode;
+    document.getElementById('pm-office').classList.toggle('active', mode === 'office');
+    document.getElementById('pm-zebra').classList.toggle('active', mode === 'zebra');
+    const btn = document.getElementById('print-btn');
+    if (btn) btn.textContent = mode === 'office' ? '🖨 Print (Office)' : '🖨 Print (Zebra)';
+  }
+
+  function printLabels() {
+    _labelIdx = 1000;
+    const data = getData();
+    if (!_currentBcVal) _currentBcVal = genBarcodeVal();
+    data._masterBcVal = _currentBcVal;
+
+    const labelHTMLs = [];
+    for (let i = 0; i < data.copies; i++) {
+      labelHTMLs.push(buildLabel(data));
+      if (data.isMixed) data.skuLines.forEach(s => labelHTMLs.push(buildLabel(data, s)));
+    }
+
+    const pageCSS = _printMode === 'office'
+      ? `@page { size: letter portrait; margin: 0.5in; }
+         body { margin:0; padding:0; background:#fff; font-family:'Barlow Condensed',sans-serif; }
+         .label-sheet { display:flex; flex-direction:column; align-items:center; gap:0.25in; }
+         .label { width:4in; height:6in; border:1.5px solid #000; display:flex; flex-direction:column;
+                  overflow:hidden; page-break-inside:avoid; break-inside:avoid; }
+         .label + .label { page-break-before:always; break-before:page; }`
+      : `@page { size: 4in 6in; margin:0; }
+         body { margin:0; padding:0; background:#fff; font-family:'Barlow Condensed',sans-serif; }
+         .label-sheet { display:block; }
+         .label { width:4in; height:6in; border:none; display:flex; flex-direction:column;
+                  overflow:hidden; page-break-after:always; break-after:page; }
+         .label:last-child { page-break-after:avoid; break-after:avoid; }`;
+
+    const sharedCSS = `
+      @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+      * { box-sizing:border-box; margin:0; padding:0; }
+      .lbl-header { background:#000; color:#fff; display:flex; align-items:center; justify-content:space-between; padding:7px 12px 6px; flex-shrink:0; border-bottom:3px solid #000; }
+      .lbl-logo { display:flex; flex-direction:column; line-height:1; }
+      .lbl-logo-text { font-weight:800; font-size:21px; letter-spacing:1.5px; text-transform:uppercase; }
+      .lbl-logo-tag { font-size:7.5px; font-weight:600; letter-spacing:2px; opacity:.85; text-transform:uppercase; margin-top:1px; }
+      .lbl-type { text-align:right; line-height:1.1; }
+      .lbl-type-title { font-weight:800; font-size:15px; letter-spacing:1px; text-transform:uppercase; }
+      .lbl-type-sub { font-size:9px; letter-spacing:1.5px; opacity:.85; text-transform:uppercase; }
+      .lbl-dest { padding:6px 12px 5px; text-align:center; font-weight:800; font-size:30px; letter-spacing:3px; text-transform:uppercase; color:#000; background:#fff; border-bottom:3px solid #000; flex-shrink:0; }
+      .lbl-body { flex:1; display:flex; flex-direction:column; padding:8px 12px 6px; gap:6px; }
+      .lbl-hero { display:flex; align-items:stretch; gap:0; border:2.5px solid #000; margin-bottom:6px; }
+      .lbl-sku { flex:1; padding:6px 10px 5px; border-right:2.5px solid #000; }
+      .lbl-field-micro { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#444; line-height:1; margin-bottom:1px; }
+      .lbl-sku-val { font-weight:800; font-size:42px; line-height:1; color:#000; letter-spacing:.5px; }
+      .lbl-merv-badge { background:#000; color:#fff; padding:6px 12px 5px; text-align:center; min-width:76px; display:flex; flex-direction:column; justify-content:center; }
+      .lbl-merv-badge .lbl-field-micro { color:rgba(255,255,255,.8); }
+      .lbl-merv-val { font-weight:800; font-size:38px; line-height:1; }
+      .lbl-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; border:2.5px solid #000; }
+      .lbl-field { background:#fff; padding:5px 8px 4px; border-right:1.5px solid #000; border-bottom:1.5px solid #000; }
+      .lbl-field:nth-child(even) { border-right:none; }
+      .lbl-field:nth-last-child(-n+2) { border-bottom:none; }
+      .lbl-field-val { font-weight:700; font-size:19px; line-height:1.15; color:#000; }
+      .lbl-field-val.large { font-size:22px; }
+      .lbl-qty-row { margin-top:4px; background:#fff; border:3px solid #000; padding:5px 10px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+      .lbl-qty-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#333; }
+      .lbl-qty-val { font-weight:800; font-size:54px; color:#000; line-height:1; letter-spacing:1px; }
+      .lbl-qty-unit { font-size:11px; color:#333; font-weight:700; letter-spacing:1px; text-align:right; line-height:1.4; text-transform:uppercase; }
+      .lbl-barcode { border-top:2px solid #000; padding:5px 10px 3px; background:#fff; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:2px; }
+      .lbl-barcode canvas { display:block; image-rendering:pixelated; }
+      .lbl-barcode-text { font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:700; letter-spacing:2px; color:#000; text-transform:uppercase; }
+      .lbl-footer { background:#fff; border-top:2px solid #000; padding:3px 10px; display:flex; justify-content:space-between; align-items:center; font-size:8.5px; color:#000; font-weight:700; letter-spacing:.5px; flex-shrink:0; }
+      .lbl-mixed-block { border:2.5px solid #000; margin-bottom:6px; overflow:hidden; }
+      .lbl-mixed-header { background:#000; color:#fff; display:flex; justify-content:space-between; align-items:center; padding:4px 10px; font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+      .lbl-mixed-cols { font-size:8px; opacity:.8; }
+      .lbl-mixed-row { display:grid; grid-template-columns:16px 1fr 56px 64px; gap:0; padding:4px 10px; align-items:center; border-bottom:1px solid #000; font-size:13px; font-weight:700; }
+      .lbl-mixed-row:last-child { border-bottom:none; }
+      .lbl-mixed-idx { font-size:9px; color:#666; font-weight:700; }
+      .lbl-mixed-sku { font-size:16px; font-weight:800; }
+      .lbl-mixed-merv { text-align:center; font-size:12px; font-weight:700; background:#000; color:#fff; border-radius:3px; padding:2px 4px; margin:0 4px; }
+      .lbl-mixed-qty { text-align:right; font-size:14px; font-weight:800; }
+    `;
+
+    const popup = window.open('', '_blank', 'width=700,height=750,toolbar=0,menubar=0,scrollbars=1');
+    if (!popup) { alert('Pop-up blocked. Allow pop-ups for this page and try again.'); return; }
+
+    popup.document.open();
+    popup.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Master Pallet Label — Print Preview</title>
+<style>${pageCSS}${sharedCSS}</style></head><body>
+<div class="label-sheet" id="ls">${labelHTMLs.join('')}</div>
+<script>
+const C128B_SYMS = ${JSON.stringify(C128B_SYMS)};
+const C128B_CHARS = ${JSON.stringify(C128B_CHARS)};
+function drawCode128(canvas, text) {
+  const START_B=104, STOP=106;
+  const indices=[START_B]; let cs=START_B;
+  for(let i=0;i<text.length;i++){const ci=C128B_CHARS.indexOf(text[i]);const si=ci<0?0:ci;indices.push(si);cs+=si*(i+1);}
+  indices.push(cs%103); indices.push(STOP);
+  const QUIET='0000000000'; let bits=QUIET;
+  for(const idx of indices){bits+=C128B_SYMS[idx]||'11010101110';}
+  bits+='11'+QUIET;
+  const mw=Math.max(1,Math.floor((canvas.parentElement.clientWidth-20)/bits.length));
+  canvas.width=bits.length*mw;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#000';
+  for(let i=0;i<bits.length;i++){if(bits[i]==='1')ctx.fillRect(i*mw,0,mw,canvas.height-8);}
+}
+window.onload=function(){
+  document.querySelectorAll('.lbl-barcode').forEach(bc=>{
+    const cv=bc.querySelector('canvas');
+    const tx=bc.querySelector('.lbl-barcode-text');
+    if(cv&&tx)drawCode128(cv,tx.textContent.trim());
+  });
+  setTimeout(()=>{ window.print(); },400);
+};
+<\/script></body></html>`);
+    popup.document.close();
+  }
+
+  function redrawAllBarcodes(container) {
+    container.querySelectorAll('.lbl-barcode').forEach(bc => {
+      const canvas = bc.querySelector('canvas');
+      const textEl = bc.querySelector('.lbl-barcode-text');
+      if (canvas && textEl) drawCode128(canvas, textEl.textContent.trim());
+    });
+  }
+
+  function resetForm() {
+    _labelIdx = 0;
+    _currentBcVal = null;
+    document.getElementById('mfg-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('shift').value = localStorage.getItem('mpl_shift') || 'Night';
+    document.getElementById('line').value  = localStorage.getItem('mpl_line')  || '1';
+    document.getElementById('inspected-by').value = '';
+    document.getElementById('dest').value  = localStorage.getItem('mpl_dest')  || 'DALLAS_DC';
+    document.getElementById('copies').value = '1';
+    document.getElementById('sku-rows-container').innerHTML = '';
+    _skuRowCount = 0;
+    addSkuRow();
+    document.getElementById('chk-destination').checked = false;
+    document.getElementById('chk-production').checked = false;
+    document.getElementById('chk-product').checked = false;
+    document.getElementById('chk-quantity').checked = false;
+    const btnConfirm = document.getElementById('btn-confirm');
+    btnConfirm.disabled = true;
+    btnConfirm.classList.remove('ready','done');
+    btnConfirm.textContent = '✔ Confirm Pallet';
+    document.getElementById('btn-print-log').disabled = true;
+    document.getElementById('btn-print-log').classList.remove('ready');
+    const sec = document.getElementById('preview-section');
+    sec.style.display = 'none';
+    const statusEl = document.getElementById('log-status');
+    statusEl.className = 'log-status';
+    statusEl.textContent = '';
+  }
+</script>
+</body>
+</html>
