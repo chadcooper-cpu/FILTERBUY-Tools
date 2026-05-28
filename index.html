@@ -3,638 +3,229 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pallet Label Generator — Avery 5162</title>
+<title>Filterbuy Talladega — Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap');
   :root {
-    --green-dark: #1A4A2E;
-    --green-mid:  #2E7D4F;
-    --green-light:#3DAA6A;
-    --green-pale: #D6EDE0;
-    --ink: #0d1f13;
-    --muted: #6b8f78;
-    --border: #b4d4c0;
-    --white: #f9fdf9;
+    --green-dark:  #1A4A2E;
+    --green-mid:   #2E7D4F;
+    --green-light: #3DAA6A;
+    --green-pale:  #D6EDE0;
+    --ink:         #0d1f13;
+    --muted:       #6b8f78;
+    --border:      #b4d4c0;
+    --white:       #f9fdf9;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
-    font-family: 'DM Mono', monospace;
+    font-family: 'Barlow', sans-serif;
     background: var(--green-dark);
     min-height: 100vh;
+    color: var(--white);
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    background: linear-gradient(180deg, #0d2b1a 0%, var(--green-dark) 100%);
+    border-bottom: 3px solid var(--green-mid);
+    padding: 28px 32px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .logo-block {
+    background: var(--green-mid);
+    padding: 8px 16px;
+    border-radius: 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 20px 60px;
+    line-height: 1;
+  }
+  .logo-block .logo-main {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    color: #fff;
+  }
+  .logo-block .logo-tag {
+    font-size: 0.52rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green-pale);
+    margin-top: 2px;
+  }
+  .header-text h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
     color: var(--white);
+    letter-spacing: 1px;
   }
-  .header { text-align: center; margin-bottom: 28px; }
-  .header h1 { font-family:'Syne',sans-serif; font-weight:800; font-size:1.9rem; color:var(--green-pale); }
-  .header p  { font-size:0.68rem; color:var(--green-light); margin-top:4px; letter-spacing:2px; text-transform:uppercase; }
-  .card {
-    background: var(--white); color: var(--ink);
-    border-radius: 12px; padding: 28px 32px 32px;
-    width: 100%; max-width: 560px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  .header-text p {
+    font-size: 0.68rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 3px;
   }
+
+  /* ── MAIN ── */
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 36px 24px 60px;
+  }
+
+  /* ── SECTION ── */
   .section-label {
-    font-size:0.62rem; letter-spacing:2.5px; text-transform:uppercase;
-    color:var(--green-mid); font-weight:700;
-    margin:18px 0 10px; border-bottom:1px solid var(--border); padding-bottom:4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--green-light);
+    margin-bottom: 14px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
   }
-  .section-label:first-child { margin-top:0; }
-  .field { margin-bottom:14px; }
-  .field label { display:block; font-size:0.65rem; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); font-weight:500; margin-bottom:5px; }
-  .field input, .field select, .field textarea {
-    width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:6px;
-    font-family:'DM Mono',monospace; font-size:0.95rem; color:var(--ink); background:#fff;
-    transition:border-color 0.15s; outline:none;
+  .section + .section { margin-top: 36px; }
+
+  /* ── TOOL GRID ── */
+  .tool-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
   }
-  .field textarea { resize:vertical; min-height:64px; font-size:0.82rem; line-height:1.5; }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color:var(--green-light); box-shadow:0 0 0 3px rgba(61,170,106,0.15); }
-  .field-row { display:flex; gap:12px; }
-  .field-row .field { flex:1; }
-  .hint { font-size:0.63rem; color:var(--muted); margin-top:3px; letter-spacing:0.5px; }
-  .paste-actions { display:flex; gap:8px; margin-top:6px; }
-  .btn-parse {
-    padding:7px 14px; background:var(--green-dark); color:#fff; border:none; border-radius:6px;
-    font-family:'DM Mono',monospace; font-size:0.78rem; letter-spacing:0.5px;
-    cursor:pointer; transition:background 0.15s;
+
+  .tool-card {
+    display: block;
+    text-decoration: none;
+    background: rgba(255,255,255,0.04);
+    border: 1.5px solid rgba(255,255,255,0.10);
+    border-radius: 10px;
+    padding: 18px 20px 16px;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    cursor: pointer;
   }
-  .btn-parse:hover { background:var(--green-mid); }
-  .btn-clear-paste {
-    padding:7px 12px; background:transparent; color:var(--muted); border:1.5px solid var(--border); border-radius:6px;
-    font-family:'DM Mono',monospace; font-size:0.78rem;
-    cursor:pointer; transition:all 0.15s;
+  .tool-card:hover {
+    background: rgba(255,255,255,0.09);
+    border-color: var(--green-light);
+    transform: translateY(-2px);
   }
-  .btn-clear-paste:hover { border-color:var(--green-light); color:var(--ink); }
-  .parse-result { font-size:0.66rem; color:var(--green-mid); margin-top:5px; min-height:16px; line-height:1.5; }
-  .preview-wrap { background:#f3faf5; border:1.5px dashed var(--border); border-radius:8px; padding:12px 14px; margin:4px 0 14px; }
-  .preview-title { font-size:0.62rem; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
-  .preview-row { font-size:0.78rem; color:var(--ink); line-height:1.8; }
-  .preview-row span { color:var(--green-mid); font-weight:600; }
-  .label-count { text-align:center; font-size:0.66rem; color:var(--muted); margin:6px 0 16px; letter-spacing:0.5px; line-height:1.7; }
-  .btn-print {
-    width:100%; padding:13px; background:var(--green-mid); color:#fff; border:none; border-radius:8px;
-    font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; letter-spacing:1px;
-    cursor:pointer; transition:background 0.15s,transform 0.1s; margin-top:4px;
+  .tool-card:active { transform: translateY(0); }
+
+  .tool-icon {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    display: block;
   }
-  .btn-print:hover  { background:var(--green-light); }
-  .btn-print:active { transform:scale(0.98); }
-  .err { color:#c0392b; font-size:0.72rem; margin-top:8px; display:none; }
-  .divider { border:none; border-top:1px solid var(--border); margin:4px 0 18px; }
+  .tool-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--white);
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    margin-bottom: 5px;
+  }
+  .tool-desc {
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .tool-badge {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 0.58rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+  }
+  .badge-live    { background: rgba(61,170,106,0.18); color: var(--green-light); border: 1px solid rgba(61,170,106,0.3); }
+  .badge-print   { background: rgba(180,212,192,0.12); color: var(--border); border: 1px solid rgba(180,212,192,0.2); }
+  .badge-scan    { background: rgba(46,125,79,0.25); color: #7de0a8; border: 1px solid rgba(46,125,79,0.4); }
+
+  /* ── FOOTER ── */
+  .site-footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>Pallet Label Generator</h1>
-  <p>Avery 5162 · 14-up · 4 Sheets · 26 Pallet Labels</p>
-</div>
+<header class="site-header">
+  <div class="logo-block">
+    <span class="logo-main">FILTERBUY</span>
+    <span class="logo-tag">Better Air For All</span>
+  </div>
+  <div class="header-text">
+    <h1>Talladega Operations Tools</h1>
+    <p>Intercompany Shipping &amp; Transportation · Internal Use Only</p>
+  </div>
+</header>
 
-<div class="card">
+<main class="main">
 
-  <!-- ── PASTE SECTION ── -->
-  <div class="section-label">Paste Load Sheet Row</div>
-  <div class="field">
-    <label>Load Sheet Data <span style="font-size:0.58rem;color:var(--muted);text-transform:none;letter-spacing:0">(paste a tab-separated row — fills fields below)</span></label>
-    <textarea id="pasteInput"></textarea>
-    <div class="parse-result" id="parseResult"></div>
-    <div class="paste-actions">
-      <button class="btn-parse" onclick="parseLoadSheet()">↓ Extract Fields</button>
-      <button class="btn-clear-paste" onclick="clearPaste()">Clear</button>
+  <!-- SHIPPING & LABELS -->
+  <div class="section">
+    <div class="section-label">Shipping &amp; Labels</div>
+    <div class="tool-grid">
+
+      <a class="tool-card" href="Master_Packing_Slip_Generator.html">
+        <span class="tool-icon">📋</span>
+        <div class="tool-name">Master Packing Slip Generator</div>
+        <div class="tool-desc">Paste from load sheet to auto-fill. Prints intercompany packing slip with Code 128 barcode. Logs to DC Transfers sheet.</div>
+        <span class="tool-badge badge-live">Live Logging</span>
+      </a>
+
+      <a class="tool-card" href="Master_Pallet_Label (13).html">
+        <span class="tool-icon">🏷️</span>
+        <div class="tool-name">Master Pallet Label</div>
+        <div class="tool-desc">4"×6" thermal label for single or mixed pallets. Code 128 barcode, Zebra-ready. Logs to Inventory sheet on confirm.</div>
+        <span class="tool-badge badge-live">Live Logging</span>
+      </a>
+
+      <a class="tool-card" href="Pallet_Label_Generator_Avery_5162.html">
+        <span class="tool-icon">🗂️</span>
+        <div class="tool-name">Pallet Label Generator</div>
+        <div class="tool-desc">Avery 5162 sheet labels — 14-up, 26 labels. Paste load sheet to auto-fill inventory + pallet sticker pairs.</div>
+        <span class="tool-badge badge-print">Print Only</span>
+      </a>
+
     </div>
   </div>
 
-  <hr class="divider">
+  <!-- BARCODE CARDS -->
+  <div class="section">
+    <div class="section-label">Barcode Cards &amp; Campus Transfers</div>
+    <div class="tool-grid">
 
-  <!-- ── MANUAL FIELDS ── -->
-  <div class="section-label">Load Information</div>
+      <a class="tool-card" href="Master_Packing_Slip_Generator (1).html">
+        <span class="tool-icon">📇</span>
+        <div class="tool-name">Print Barcode Cards</div>
+        <div class="tool-desc">Print Destination Key Card (all 13 campus destinations) or reprint a single Transport Mode barcode card for torn/missing vehicle cards.</div>
+        <span class="tool-badge badge-print">Print Only</span>
+      </a>
 
-  <div class="field-row">
-    <div class="field">
-      <label>Load Date</label>
-      <input type="date" id="loadDate" oninput="up()">
-    </div>
-    <div class="field">
-      <label>Trailer #</label>
-      <input type="text" id="trailerNum" oninput="up()">
-    </div>
-  </div>
-
-  <div class="field">
-    <label>Loader Name <span style="font-size:0.58rem;color:var(--muted);text-transform:none;letter-spacing:0">(optional — blank adds signature line)</span></label>
-    <input type="text" id="loaderName" oninput="up()">
-  </div>
-
-  <div class="field-row">
-    <div class="field">
-      <label>State</label>
-      <select id="stateCode" onchange="up()">
-        <option value="">—</option>
-        <option value="AL">AL</option>
-        <option value="CA">CA</option>
-        <option value="FL">FL</option>
-        <option value="IL">IL</option>
-        <option value="NJ">NJ</option>
-        <option value="TX">TX</option>
-        <option value="UT">UT</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>ID Code</label>
-      <input type="text" id="idCode" maxlength="4" style="text-transform:uppercase" oninput="up()">
-      <div class="hint">3–4 chars · e.g. 049</div>
     </div>
   </div>
 
-  <div class="field-row">
-    <div class="field">
-      <label>Load Origin 1</label>
-      <select id="origin1" onchange="up()">
-        <option value="">—</option>
-        <option value="Woodland Dock">Woodland Dock</option>
-        <option value="Newberry">Newberry</option>
-        <option value="Woodland West">Woodland West</option>
-        <option value="3K Warehouse">3K Warehouse</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Load Origin 2</label>
-      <select id="origin2" onchange="up()">
-        <option value="">— (optional)</option>
-        <option value="Woodland Dock">Woodland Dock</option>
-        <option value="Newberry">Newberry</option>
-        <option value="Woodland West">Woodland West</option>
-        <option value="3K Warehouse">3K Warehouse</option>
-      </select>
-    </div>
-  </div>
+</main>
 
-  <div class="preview-wrap">
-    <div class="preview-title">Header preview</div>
-    <div class="preview-row">Date: <span id="pv-date">—</span> &nbsp;·&nbsp; Trailer: <span id="pv-trailer">—</span></div>
-    <div class="preview-row">Ship ID: <span id="pv-id">—</span> &nbsp;·&nbsp; Loader: <span id="pv-loader">(signature line)</span></div>
-    <div class="preview-row">Origin 1: <span id="pv-o1">—</span> &nbsp;·&nbsp; Origin 2: <span id="pv-o2">(none)</span></div>
-  </div>
+<footer class="site-footer">
+  Filterbuy Talladega · Intercompany Shipping &amp; Transportation · For internal use only
+</footer>
 
-  <button class="btn-print" onclick="printLabels()">🖨&nbsp; Print Labels (4 Sheets)</button>
-  <div class="err" id="errMsg"></div>
-</div>
-
-<script>
-  // ── Formatters ────────────────────────────────────────────────────────────
-  function fmtMDY(d) {
-    if (!d) return '—';
-    const [y,m,day] = d.split('-');
-    return `${m}/${day}/${y.slice(2)}`;
-  }
-  function fmtFooter(d, sid) {
-    if (!d) return sid || '';
-    const [y,m,day] = d.split('-');
-    return `${m}${day}${y.slice(2)}-${sid}`;
-  }
-  function gv(id) { return document.getElementById(id).value; }
-
-  function up() {
-    const d=gv('loadDate'), t=gv('trailerNum'), l=gv('loaderName');
-    const s=gv('stateCode'), c=gv('idCode').toUpperCase();
-    const o1=gv('origin1'), o2=gv('origin2');
-    document.getElementById('pv-date').textContent    = fmtMDY(d);
-    document.getElementById('pv-trailer').textContent = t || '—';
-    document.getElementById('pv-id').textContent      = (s&&c) ? `${s}-${c}` : '—';
-    document.getElementById('pv-loader').textContent  = l || '(signature line)';
-    document.getElementById('pv-o1').textContent      = o1 || '—';
-    document.getElementById('pv-o2').textContent      = o2 || '(none)';
-  }
-
-  // ── Load Sheet Parser ─────────────────────────────────────────────────────
-  // Tab-delimited columns (0-indexed):
-  //  A=0: Origin(s)       e.g. "Woodland Dock" or "Woodland Dock / 3K Warehouse"
-  //  B=1: Destination     e.g. "Elgin IL" → state IL
-  //  C=2: Driver code     e.g. "EGO"  (ignored)
-  //  D=3: Ship ID         e.g. "051526-IL050" → last segment after final dash: IL=state, 050=code
-  //  E=4: Trailer #       e.g. "604933" or carrier name
-  //  F=5: Planned pickup  (ignored — load date stays as today unless changed manually)
-  //  G=6: Shift/Time      (ignored)
-  //  H=7: Delivery date   (ignored)
-  // NOTE: Loader name is NOT in the load sheet — fill manually.
-  function parseLoadSheet() {
-    const raw = gv('pasteInput').trim();
-    const resultEl = document.getElementById('parseResult');
-    if (!raw) { resultEl.textContent = 'Nothing to parse.'; return; }
-
-    const cols = raw.split('\t').map(c => c.trim());
-    const filled = [], skipped = [];
-
-    const VALID_STATES = ['AL','CA','FL','IL','NJ','TX','UT'];
-    const ORIGIN_MAP = {
-      'woodland dock':  'Woodland Dock',
-      'woodland west':  'Woodland West',
-      'newberry':       'Newberry',
-      '3k warehouse':   '3K Warehouse',
-      '3k':             '3K Warehouse',
-    };
-
-    function setSelect(id, val) {
-      const el = document.getElementById(id);
-      for (let o of el.options) { if (o.value === val) { el.value = val; return true; } }
-      return false;
-    }
-
-    function matchOrigin(str) {
-      const key = str.trim().toLowerCase();
-      if (ORIGIN_MAP[key]) return ORIGIN_MAP[key];
-      return ORIGIN_MAP[Object.keys(ORIGIN_MAP).find(k => key.includes(k) || k.includes(key))] || null;
-    }
-
-    // Col A=0: Origin — may contain two origins separated by "/"
-    if (cols[0]) {
-      const parts = cols[0].split('/').map(s => s.trim()).filter(Boolean);
-      const o1match = parts[0] ? matchOrigin(parts[0]) : null;
-      const o2match = parts[1] ? matchOrigin(parts[1]) : null;
-      if (o1match && setSelect('origin1', o1match)) filled.push('Origin 1');
-      else if (parts[0]) skipped.push(`Origin 1 ("${parts[0]}")`);
-      if (o2match && setSelect('origin2', o2match)) filled.push('Origin 2');
-      else if (parts[1]) skipped.push(`Origin 2 ("${parts[1]}")`);
-    }
-
-    // Col B=1: Destination city/state → extract state
-    if (cols[1]) {
-      const sm = cols[1].match(/\b(AL|CA|FL|IL|NJ|TX|UT)\b/i);
-      if (sm && setSelect('stateCode', sm[1].toUpperCase())) filled.push('State');
-      else skipped.push(`State ("${cols[1]}")`);
-    }
-
-    // Col C=2: Driver code — ignored
-
-    // Col D=3: Ship ID e.g. "051526-IL050"
-    // Split on dashes, last segment = state (first 2 chars) + code (rest)
-    if (cols[3]) {
-      const segs = cols[3].split('-');
-      const last = segs[segs.length - 1];  // e.g. "IL050"
-      const st   = last.slice(0, 2).toUpperCase();
-      const code = last.slice(2).toUpperCase();
-      if (VALID_STATES.includes(st) && code.length >= 2) {
-        setSelect('stateCode', st);
-        document.getElementById('idCode').value = code;
-        if (!filled.includes('State')) filled.push('State');
-        filled.push('ID Code');
-      } else {
-        skipped.push(`Ship ID ("${cols[3]}")`);
-      }
-    }
-
-    // Col E=4: Trailer # or carrier name
-    if (cols[4]) {
-      document.getElementById('trailerNum').value = cols[4];
-      filled.push('Trailer #');
-    }
-
-    // Col F=5: Planned pickup date — IGNORED
-    // Load date stays as today (or whatever was manually set)
-
-    // Cols G=6, H=7: ignored
-
-    up();
-
-    let msg = '';
-    if (filled.length) msg += `✓ Filled: ${filled.join(', ')}.`;
-    msg += `${filled.length ? '  ' : ''}⚠ Fill manually: Loader Name. Load date = today.`;
-    resultEl.textContent = msg;
-  }
-
-  function clearPaste() {
-    document.getElementById('pasteInput').value = '';
-    document.getElementById('parseResult').textContent = '';
-  }
-
-  // ── Print ─────────────────────────────────────────────────────────────────
-  function printLabels() {
-    const errEl = document.getElementById('errMsg');
-    errEl.style.display = 'none';
-
-    const rawDate = gv('loadDate');
-    const trailer = gv('trailerNum').trim();
-    const loader  = gv('loaderName').trim();
-    const state   = gv('stateCode').toUpperCase();
-    const code    = gv('idCode').toUpperCase().slice(0,4);
-    const o1      = gv('origin1');
-    const o2      = gv('origin2');
-
-    // Blank-field-friendly: show blanks on labels if fields missing
-    const dateDisp    = rawDate ? fmtMDY(rawDate) : '__ /__ /__';
-    const shipID      = (state && code) ? `${state}-${code}` : (state ? state+'-___' : '___-___');
-    const footerStr   = rawDate ? fmtFooter(rawDate, shipID) : shipID;
-    const trailerDisp = trailer || '____________';
-    const o1disp      = o1 || '___';
-    const o2disp      = o2 || '—';
-
-    const now = new Date();
-    const tsStr = now.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})
-                + ' ' + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
-
-    const loaderHdrContent = loader
-      ? `<div class="hf-val">${loader}</div>`
-      : `<div class="hf-sig-wrap"><div class="hf-sig-line"></div></div>`;
-    const loaderFtrContent = loader
-      ? `<div class="ftr-name">${loader}</div>`
-      : `<div class="ftr-sig-wrap"><div class="ftr-sig-line"></div></div>`;
-
-    // ── Print CSS ─────────────────────────────────────────────────────────
-    const css = `
-* { box-sizing:border-box; margin:0; padding:0; }
-@page { size:8.5in 11in; margin:0; }
-body { background:#fff; font-family:Arial,Helvetica,sans-serif; }
-
-.sheet {
-  width:8.5in; height:11in;
-  padding:0.855in 0 0.604in;
-  display:grid;
-  grid-template-columns:4.145in 0.133in 4.145in;
-  grid-template-rows:repeat(7, 1.363in);
-  page-break-after:always;
-  overflow:hidden;
-  position:relative;
-  margin-left:-0.024in;
-}
-.sheet:last-child { page-break-after:auto; }
-.gutter { grid-column:2; }
-
-/* ── HEADER ── */
-.header-cell {
-  grid-column:1/4;
-  grid-row:1/2;
-  border:6px solid #000;
-  border-radius:2px;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  box-sizing:border-box;
-}
-.hdr-brand {
-  background:#fff;
-  border-bottom:2px solid #000;
-  padding:3px 14px;
-  display:flex; align-items:center; justify-content:space-between;
-  flex-shrink:0;
-}
-.hdr-brand-left { display:flex; align-items:baseline; gap:8px; }
-.fb-name { font-size:14pt; font-weight:900; letter-spacing:1.5px; color:#000; font-family:'Arial Black',Arial,sans-serif; }
-.fb-tag  { font-size:6pt; font-style:italic; color:#555; }
-.hdr-brand-right { font-size:6pt; color:#555; text-transform:uppercase; letter-spacing:1.5px; }
-.hdr-stripe { display:none; }
-.hdr-fields { flex:1; display:grid; grid-template-columns:repeat(6,1fr); }
-.hf {
-  padding:2px 8px 2px 16px;
-  border-right:1px solid #bbb;
-  display:flex; flex-direction:column; justify-content:center;
-}
-.hf:last-child { border-right:none; }
-.hf:nth-child(odd)  { background:#f2f2f2; }
-.hf:nth-child(even) { background:#fff; }
-.hf-lbl { font-size:5pt; font-weight:700; text-transform:uppercase; color:#000; letter-spacing:1px; margin-bottom:1px; }
-.hf-val { font-size:10pt; font-weight:700; color:#000; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1; }
-.hf-sig-wrap { display:flex; align-items:flex-end; height:18px; }
-.hf-sig-line { border-bottom:1px solid #000; width:85%; }
-
-/* ── FOOTER ── */
-.footer-cell {
-  grid-column:1/4; grid-row:7/8;
-  border:6px solid #000; border-radius:2px;
-  display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box;
-}
-.ftr-top {
-  background:#fff; border-bottom:2px solid #000; padding:2px 12px;
-  display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
-}
-.ftr-top-title { font-size:6.5pt; font-weight:700; color:#000; text-transform:uppercase; letter-spacing:1.5px; }
-.ftr-top-id    { font-size:6pt; color:#555; letter-spacing:0.5px; }
-.ftr-stripe { display:none; }
-.ftr-body { flex:1; display:grid; grid-template-columns:1fr 1fr 1fr; }
-.ftr-field {
-  padding:4px 12px; border-right:1px solid #bbb;
-  display:flex; flex-direction:column; justify-content:space-between;
-}
-.ftr-field:last-child { border-right:none; }
-.ftr-field:nth-child(odd)  { background:#f2f2f2; }
-.ftr-field:nth-child(even) { background:#fff; }
-.ftr-lbl  { font-size:5pt; font-weight:700; text-transform:uppercase; color:#000; letter-spacing:1px; }
-.ftr-name { font-size:9pt; font-weight:700; color:#000; }
-.ftr-sig-wrap { display:flex; align-items:flex-end; flex:1; padding-bottom:3px; }
-.ftr-sig-line { border-bottom:1px solid #000; width:88%; }
-
-/* ── INVENTORY LABEL (left col) ── */
-.inv-label {
-  border:6px solid #000;
-  display:grid;
-  grid-template-rows:auto 1fr 1fr auto;
-  overflow:hidden;
-  box-sizing:border-box;
-}
-.inv-header {
-  background:#fff;
-  border-bottom:1.5px solid #000;
-  padding:2px 10px;
-  display:flex; align-items:baseline; justify-content:space-between;
-  flex-shrink:0;
-}
-.inv-header-name { font-size:7.5pt; font-weight:900; color:#000; letter-spacing:1px; font-family:'Arial Black',Arial,sans-serif; }
-.inv-header-tag  { font-size:4.5pt; font-style:italic; color:#555; }
-.inv-hstripe { display:none; }
-.inv-row { display:grid; grid-template-columns:1fr 0.75in; border-bottom:1px solid #bbb; }
-.inv-row-1 { background:#fff; }
-.inv-row-2 { background:#efefef; }
-.inv-sku {
-  padding:2px 26px 2px; border-right:1px solid #bbb;
-  display:flex; flex-direction:column; justify-content:space-between;
-}
-.inv-sku-lbl { font-size:5pt; color:#000; font-weight:700; letter-spacing:0.5px; }
-.inv-sku-val { font-size:7.5pt; font-weight:700; color:#000; }
-.inv-qty {
-  padding:2px 5px 2px;
-  display:flex; flex-direction:column; justify-content:space-between; align-items:flex-end;
-}
-.inv-qty-lbl { font-size:5pt; color:#000; font-weight:700; letter-spacing:0.5px; }
-.inv-qty-val { font-size:7.5pt; font-weight:700; color:#000; }
-.inv-footer {
-  background:#fff;
-  border-top:1px solid #000;
-  display:flex; justify-content:space-between; align-items:center; padding:1px 26px;
-}
-.inv-footer-id     { font-size:5.5pt; color:#000; letter-spacing:0.5px; }
-.inv-footer-pallet { font-size:5.5pt; font-weight:700; color:#000; }
-
-/* ── PALLET STICKER (right col) ── */
-.plt-label {
-  border:6px solid #000; border-radius:2px;
-  display:flex; flex-direction:column;
-  overflow:hidden; background:#fff; box-sizing:border-box;
-}
-.plt-brand {
-  background:#fff; border-bottom:1.5px solid #000; padding:2px 10px;
-  display:flex; align-items:baseline; justify-content:space-between; flex-shrink:0;
-}
-.plt-brand-name { font-size:10pt; font-weight:900; color:#000; letter-spacing:1px; font-family:'Arial Black',Arial,sans-serif; }
-.plt-brand-tag  { font-size:5pt; font-style:italic; color:#555; }
-.plt-stripe { display:none; }
-.plt-body {
-  flex:1; display:flex; flex-direction:column; justify-content:center; padding:2px 10px;
-}
-.plt-shipid { font-size:13pt; font-weight:900; color:#000; letter-spacing:2px; line-height:1.1; white-space:nowrap; }
-.plt-count  { font-size:16pt; font-weight:900; color:#000; line-height:1.1; margin-top:1pt; letter-spacing:0.5px; }
-.plt-divider { border:none; border-top:1px solid #bbb; margin:2pt 0 2pt; }
-.plt-meta { display:flex; justify-content:space-between; align-items:center; }
-.plt-meta-dest { font-size:6pt; font-weight:700; color:#000; text-transform:uppercase; letter-spacing:0.5px; }
-.plt-meta-date { font-size:6pt; color:#555; }
-
-.empty-cell { border:1px solid #ccc; background:#fafafa; }
-
-.ts { position:absolute; bottom:3px; left:6px; font-size:5pt; color:#bbb; letter-spacing:0.3px; }
-.pg { position:absolute; top:6px; right:8px; font-size:7pt; font-weight:700; color:#000; letter-spacing:0.5px; }
-    `;
-
-    // ── Label builders ────────────────────────────────────────────────────
-    function invL(num) {
-      return `<div class="inv-label">
-  <div class="inv-header">
-    <span class="inv-header-name">FILTERBUY</span>
-    <span class="inv-header-tag">Better Air For All.</span>
-  </div>
-  <div class="inv-hstripe"></div>
-  <div class="inv-row inv-row-1">
-    <div class="inv-sku"><span class="inv-sku-lbl">SKU 1</span><span class="inv-sku-val"></span></div>
-    <div class="inv-qty"><span class="inv-qty-lbl">Qty</span><span class="inv-qty-val"></span></div>
-  </div>
-  <div class="inv-row inv-row-2">
-    <div class="inv-sku"><span class="inv-sku-lbl">SKU 2</span><span class="inv-sku-val"></span></div>
-    <div class="inv-qty"><span class="inv-qty-lbl">Qty</span><span class="inv-qty-val"></span></div>
-  </div>
-  <div class="inv-footer">
-    <span class="inv-footer-id">${footerStr}</span>
-    <span class="inv-footer-pallet">${num} of 26</span>
-  </div>
-</div>`;
-    }
-
-    function pltL(num) {
-      const originStr = o1disp + (o2 ? ' / ' + o2 : '');
-      const dest = `${originStr} \u2192 ${state || '??'}`;
-      return `<div class="plt-label">
-  <div class="plt-brand">
-    <span class="plt-brand-name">FILTERBUY</span>
-    <span class="plt-brand-tag">Better Air For All.</span>
-  </div>
-  <div class="plt-stripe"></div>
-  <div class="plt-body">
-    <div class="plt-shipid">${shipID}</div>
-    <div class="plt-count">Pallet ${num} of 26</div>
-    <hr class="plt-divider">
-    <div class="plt-meta">
-      <span class="plt-meta-dest">${dest}</span>
-      <span class="plt-meta-date">${dateDisp}</span>
-    </div>
-  </div>
-</div>`;
-    }
-
-    // ── Header / Footer ───────────────────────────────────────────────────
-    const hdr = `<div class="header-cell">
-  <div class="hdr-brand">
-    <div class="hdr-brand-left">
-      <span class="fb-name">FILTERBUY</span>
-      <span class="fb-tag">Better Air For All.</span>
-    </div>
-    <div class="hdr-brand-right">Talladega DC &nbsp;·&nbsp; Load Manifest</div>
-  </div>
-  <div class="hdr-stripe"></div>
-  <div class="hdr-fields">
-    <div class="hf"><div class="hf-lbl">Date</div><div class="hf-val">${dateDisp}</div></div>
-    <div class="hf"><div class="hf-lbl">Trailer #</div><div class="hf-val">${trailerDisp}</div></div>
-    <div class="hf"><div class="hf-lbl">Ship ID</div><div class="hf-val">${shipID}</div></div>
-    <div class="hf"><div class="hf-lbl">Loader</div>${loaderHdrContent}</div>
-    <div class="hf"><div class="hf-lbl">Origin 1</div><div class="hf-val">${o1disp}</div></div>
-    <div class="hf"><div class="hf-lbl">Origin 2</div><div class="hf-val">${o2disp}</div></div>
-  </div>
-</div>`;
-
-    const ftr = `<div class="footer-cell">
-  <div class="ftr-top">
-    <span class="ftr-top-title">Quality &amp; Load Verification</span>
-    <span class="ftr-top-id">${footerStr}</span>
-  </div>
-  <div class="ftr-stripe"></div>
-  <div class="ftr-body">
-    <div class="ftr-field"><div class="ftr-lbl">Quality Check #1</div><div class="ftr-sig-wrap"><div class="ftr-sig-line"></div></div></div>
-    <div class="ftr-field"><div class="ftr-lbl">Quality Check #2</div><div class="ftr-sig-wrap"><div class="ftr-sig-line"></div></div></div>
-    <div class="ftr-field"><div class="ftr-lbl">Loader</div>${loaderFtrContent}</div>
-  </div>
-</div>`;
-
-    // ── Sheet assembly ────────────────────────────────────────────────────
-    const pairs = [];
-    for (let i = 1; i <= 26; i++) pairs.push({ inv: invL(i), plt: pltL(i) });
-
-    function buildSheet(slice, withHeader, withFooter, dataRows, sheetNum) {
-      let html = `<div class="sheet">`;
-      if (withHeader) html += hdr;
-      for (let r = 0; r < dataRows; r++) {
-        const p = slice[r];
-        html += p ? p.inv : '<div class="empty-cell"></div>';
-        html += '<div class="gutter"></div>';
-        html += p ? p.plt : '<div class="empty-cell"></div>';
-      }
-      if (withFooter) html += ftr;
-      html += `<div class="pg">Page ${sheetNum} of 4</div>`;
-      html += `<div class="ts">Created: ${tsStr}</div>`;
-      html += `</div>`;
-      return html;
-    }
-
-    const sheetsHTML = [
-      buildSheet(pairs.slice(0,6),   true,  false, 6, 1),
-      buildSheet(pairs.slice(6,13),  false, false, 7, 2),
-      buildSheet(pairs.slice(13,20), false, false, 7, 3),
-      buildSheet(pairs.slice(20,26), false, true,  6, 4),
-    ].join('\n');
-
-    const printHtml = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8">
-<title>Pallet Labels — ${shipID} — ${dateDisp}</title>
-<style>${css}</style>
-</head><body>
-${sheetsHTML}
-<script>window.onload=function(){ window.print(); window.onafterprint=function(){ window.close(); }; };<\/script>
-</body></html>`;
-
-    const win = window.open('', '_blank', 'width=980,height=780');
-    win.document.open();
-    win.document.write(printHtml);
-    win.document.close();
-    win.focus();
-
-    setTimeout(() => {
-      ['trailerNum','loaderName','idCode','pasteInput'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
-      document.getElementById('stateCode').value = '';
-      document.getElementById('origin1').value   = '';
-      document.getElementById('origin2').value   = '';
-      document.getElementById('parseResult').textContent = '';
-      // Re-set date to today AFTER clearing
-      const t = new Date();
-      document.getElementById('loadDate').value =
-        `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-      up();
-    }, 800);
-  }
-
-  // ── Init: set today's date ────────────────────────────────────────────────
-  (function() {
-    const t = new Date();
-    document.getElementById('loadDate').value =
-      `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-    up();
-  })();
-</script>
 </body>
 </html>
