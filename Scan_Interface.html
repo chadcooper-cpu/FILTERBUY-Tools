@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan Interface — Filterbuy Talladega</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --black:     #080C08;
+    --gray-dk:   #111611;
+    --gray-mid:  #1C231C;
+    --gray-ui:   #263026;
+    --gray-line: #344034;
+    --gray-muted:#4A5C4A;
+    --gray-label:#7A947A;
+    --green:     #008533;
+    --green-lt:  #04AB47;
+    --green-dk:  #005C24;
+    --green-dim: #003518;
+    --white:     #EFF5EF;
+    --yellow:    #F2EE32;
+    --red:       #CC3333;
+    --blue:      #3399FF;
+    --orange:    #FF8C00;
+
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-cond: 'IBM Plex Sans Condensed', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    background: var(--gray-dk);
+    border-bottom: 2px solid var(--green-dk);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo-text {
+    font-family: var(--font-cond);
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: var(--white);
+    text-transform: uppercase;
+  }
+  .logo-sub {
+    font-family: var(--font-cond);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--green-lt);
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+  #header .tool-label {
+    margin-left: auto;
+    font-family: var(--font-cond);
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--gray-muted);
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  #main { max-width: 860px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* ── IDLE STATE ── */
+  #state-idle { text-align: center; padding: 40px 20px; }
+  .idle-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    opacity: 0.4;
+  }
+  .idle-title {
+    font-family: var(--font-cond);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray-label);
+    margin-bottom: 10px;
+  }
+  .idle-sub {
+    font-size: 13px;
+    color: var(--gray-muted);
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  /* ── SCAN INPUT ── */
+  .scan-wrap { position: relative; margin-bottom: 12px; }
+  .scan-input {
+    width: 100%;
+    background: var(--gray-mid);
+    border: 2px solid var(--gray-line);
+    border-radius: 4px;
+    color: var(--white);
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    padding: 16px 18px;
+    outline: none;
+    transition: border-color 0.15s;
+    text-transform: uppercase;
+  }
+  .scan-input::placeholder { color: var(--gray-muted); font-size: 16px; letter-spacing: 1px; }
+  .scan-input:focus { border-color: var(--green); }
+  .scan-input.session-dc     { border-color: var(--blue); }
+  .scan-input.session-campus { border-color: var(--orange); }
+
+  /* ── SESSION HEADER CARD ── */
+  .session-card {
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border: 2px solid;
+  }
+  .session-card.dc     { background: #001022; border-color: var(--blue); }
+  .session-card.campus { background: #1a0e00; border-color: var(--orange); }
+
+  .session-type {
+    font-family: var(--font-cond);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .session-card.dc     .session-type { color: var(--blue); }
+  .session-card.campus .session-type { color: var(--orange); }
+
+  .session-id {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 10px;
+  }
+  .session-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .session-meta-field { display: flex; flex-direction: column; gap: 2px; }
+  .session-meta-field .smf-label {
+    font-family: var(--font-cond);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray-muted);
+  }
+  .session-meta-field .smf-val {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--white);
+  }
+
+  /* DC extra fields */
+  .dc-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label {
+    font-family: var(--font-cond);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray-label);
+  }
+  .field input, .field select {
+    background: var(--gray-mid);
+    border: 1px solid var(--gray-line);
+    border-radius: 3px;
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus { border-color: var(--green); }
+  .field select option { background: var(--gray-mid); }
+  .field-val { font-family: var(--font-mono); font-size: 14px; color: var(--white); padding: 8px 0; }
+
+  /* ── STATUS BOX ── */
+  #status-box {
+    background: var(--gray-mid);
+    border: 1px solid var(--gray-line);
+    border-radius: 4px;
+    padding: 14px 16px;
+    min-height: 60px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  #status-box.ok    { background: #001a0a; border-color: var(--green); }
+  #status-box.warn  { background: #1a1800; border-color: var(--yellow); }
+  #status-box.error { background: #1a0000; border-color: var(--red); }
+  #status-box.info  { background: #001022; border-color: var(--blue); }
+
+  .stag {
+    display: inline-block;
+    font-family: var(--font-cond);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-right: 6px;
+  }
+  .stag-ok    { background: var(--green);  color: #fff; }
+  .stag-warn  { background: var(--yellow); color: #000; }
+  .stag-error { background: var(--red);    color: #fff; }
+  .stag-info  { background: var(--blue);   color: #fff; }
+  .stag-dc    { background: var(--blue);   color: #fff; }
+  .stag-camp  { background: var(--orange); color: #000; }
+
+  /* ── PALLET LIST ── */
+  .pallet-list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .pallet-list-title {
+    font-family: var(--font-cond);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gray-label);
+  }
+  .pallet-count {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--green-lt);
+  }
+
+  #pallet-list {
+    background: var(--gray-dk);
+    border: 1px solid var(--gray-line);
+    border-radius: 4px;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+  }
+  .pallet-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 80px 80px 60px;
+    gap: 0;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--gray-line);
+    font-size: 13px;
+    align-items: center;
+    animation: slideIn 0.15s ease;
+  }
+  .pallet-row:last-child { border-bottom: none; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+  .pallet-row.header {
+    background: var(--gray-mid);
+    font-family: var(--font-cond);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray-muted);
+    animation: none;
+    position: sticky;
+    top: 0;
+  }
+  .pr-pos  { font-family: var(--font-mono); font-weight: 700; color: var(--green-lt); }
+  .pr-id   { font-family: var(--font-mono); font-size: 12px; color: var(--gray-label); }
+  .pr-sku  { font-weight: 600; }
+  .pr-merv { text-align: center; }
+  .pr-qty  { text-align: right; font-family: var(--font-mono); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border: none;
+    border-radius: 3px;
+    font-family: var(--font-cond);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-green  { background: var(--green);  color: #fff; }
+  .btn-green:hover  { background: var(--green-lt); }
+  .btn-blue   { background: var(--blue);   color: #fff; }
+  .btn-blue:hover   { background: #55aaff; }
+  .btn-orange { background: var(--orange); color: #000; }
+  .btn-orange:hover { background: #ffaa33; }
+  .btn-red    { background: var(--red);    color: #fff; }
+  .btn-red:hover    { background: #aa2222; }
+  .btn-gray   { background: var(--gray-ui); color: var(--white); }
+  .btn-gray:hover   { background: var(--gray-line); }
+  .btn-yellow { background: var(--yellow); color: #000; }
+  .btn-yellow:hover { background: #e0dc20; }
+  .btn-full   { width: 100%; }
+  .btn-lg     { font-size: 18px; padding: 15px 28px; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+  /* ── INSTRUCTION HINT ── */
+  .hint {
+    background: var(--gray-dim, #0a120a);
+    border-left: 3px solid var(--green-dk);
+    border-radius: 2px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--gray-label);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .hint strong { color: var(--white); }
+
+  /* ── CONFIRM POPUP ── */
+  .popup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .popup-overlay.open { display: flex; }
+  .popup-box {
+    background: var(--gray-dk);
+    border: 2px solid var(--green);
+    border-radius: 6px;
+    padding: 28px;
+    max-width: 500px;
+    width: 95%;
+  }
+  .popup-box.dc-popup     { border-color: var(--blue); }
+  .popup-box.campus-popup { border-color: var(--orange); }
+  .popup-box h3 {
+    font-family: var(--font-cond);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .popup-box.dc-popup h3     { color: var(--blue); }
+  .popup-box.campus-popup h3 { color: var(--orange); }
+  .popup-detail {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  .popup-detail .pk { color: var(--gray-label); font-family: var(--font-cond); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding-top: 2px; }
+  .popup-detail .pv { color: var(--white); font-family: var(--font-mono); font-size: 13px; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--green-dk);
+    border: 1px solid var(--green);
+    color: var(--white);
+    font-family: var(--font-cond);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 10px 22px;
+    border-radius: 4px;
+    transition: transform 0.25s ease;
+    z-index: 200;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.err  { background: #3a0000; border-color: var(--red); }
+
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid transparent; border-top-color: currentColor;
+    border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .section-head {
+    font-family: var(--font-cond);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--green-lt);
+    border-bottom: 1px solid var(--gray-line);
+    padding-bottom: 5px;
+    margin-bottom: 14px;
+  }
+
+  @media (max-width: 580px) {
+    .dc-fields { grid-template-columns: 1fr; }
+    .pallet-row { grid-template-columns: 36px 1fr 70px 60px; }
+    .pr-id { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <div>
+    <div class="logo-text">Filterbuy</div>
+    <div class="logo-sub">Better Air For All</div>
+  </div>
+  <div class="tool-label">Talladega · Scan Interface</div>
+</div>
+
+<div id="main">
+
+  <!-- ── IDLE STATE ── -->
+  <div id="state-idle">
+    <div class="idle-icon">⌖</div>
+    <div class="idle-title">Ready to Scan</div>
+    <div class="idle-sub">
+      Scan a <strong>Packing Slip barcode</strong> to begin a DC shipment<br>
+      or a <strong>Transport barcode</strong> (BT-341, PUP-32, FB-01) to begin a campus transfer
+    </div>
+    <div class="scan-wrap">
+      <input type="text" class="scan-input" id="idle-input"
+        placeholder="Scan opening barcode…"
+        autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div id="idle-status" style="font-size:13px;color:var(--gray-muted);margin-top:8px;min-height:20px;"></div>
+  </div>
+
+  <!-- ── ACTIVE SESSION ── -->
+  <div id="state-session" style="display:none">
+
+    <!-- Session header -->
+    <div class="session-card" id="session-card">
+      <div class="session-type" id="session-type-label"></div>
+      <div class="session-id" id="session-id-display"></div>
+      <div class="session-meta" id="session-meta"></div>
+    </div>
+
+    <!-- DC shipment details — auto-filled from Packing Slips tab lookup -->
+    <div id="dc-fields-wrap" style="display:none">
+      <div class="section-head">Shipment Details</div>
+      <div class="dc-fields">
+        <div class="field"><label>Ship To</label><div class="field-val" id="dc-shipto">—</div></div>
+        <div class="field"><label>Carrier</label><div class="field-val" id="dc-carrier">—</div></div>
+        <div class="field"><label>Trailer #</label><div class="field-val" id="dc-trailer">—</div></div>
+        <div class="field"><label>Loaded By</label><div class="field-val" id="dc-loadedby">—</div></div>
+      </div>
+    </div>
+
+    <!-- Hint -->
+    <div class="hint" id="scan-hint"></div>
+
+    <!-- Scan input -->
+    <div class="scan-wrap">
+      <input type="text" class="scan-input" id="session-input"
+        placeholder="Scan pallet barcode…"
+        autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+
+    <!-- Status -->
+    <div id="status-box">
+      <span style="color:var(--gray-muted);font-size:13px">Waiting for first scan…</span>
+    </div>
+
+    <!-- Pallet list -->
+    <div class="pallet-list-head">
+      <span class="pallet-list-title">Pallets Scanned</span>
+      <span class="pallet-count"><span id="pallet-count">0</span> / 26</span>
+    </div>
+    <div id="pallet-list">
+      <div class="pallet-row header">
+        <span class="pr-pos">Pos</span>
+        <span class="pr-id">Pallet ID</span>
+        <span class="pr-sku">SKU</span>
+        <span class="pr-merv">MERV</span>
+        <span class="pr-qty">Qty</span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-red" onclick="cancelSession()">✕ Cancel Session</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- PALLET CONFIRM POPUP -->
+<div class="popup-overlay" id="pallet-popup">
+  <div class="popup-box" id="pallet-popup-box">
+    <h3 id="pallet-popup-title">Confirm Pallet</h3>
+    <div class="popup-detail" id="pallet-popup-detail"></div>
+    <div class="btn-row">
+      <button class="btn btn-green" id="pallet-confirm-btn" onclick="confirmPallet()">✓ Add to Load</button>
+      <button class="btn btn-gray" onclick="closePopup('pallet-popup')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLOSE SESSION POPUP -->
+<div class="popup-overlay" id="close-popup">
+  <div class="popup-box" id="close-popup-box">
+    <h3 id="close-popup-title">Close Session</h3>
+    <div class="popup-detail" id="close-popup-detail"></div>
+    <div class="btn-row">
+      <button class="btn btn-yellow btn-lg" id="close-confirm-btn" onclick="confirmCloseSession()">
+        ✓ Close &amp; Print
+      </button>
+      <button class="btn btn-gray" onclick="closePopup('close-popup')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<script>
+// ─────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────
+const WEB_APP_URL = 'https://script.google.com/a/macros/filterbuy.com/s/AKfycbzZv8dRDWcKx8hVtF0HNLR8R32PgP6YDIt6fW_MneEbcVEm7UrYyUSunO49CBgMmk4e6g/exec';
+
+// Known destination codes from the Destination Key Card
+const DESTINATION_CODES = [
+  'WOODLAND','POPE','WHLSL','AMAZON','3K','RETAIL1','RETAIL2','RETAIL3',
+  'GB1','GB2','NEWBRY','TMS','PIGWHS'
+];
+
+// Transport ID prefixes
+const TRANSPORT_PREFIXES = ['BT-','PUP-','FB-'];
+
+// DC destinations
+const DC_NAMES = { DAL: 'Dallas, TX', ORL: 'Orlando, FL', ELG: 'Elgin, IL' };
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let session = null;
+/*
+session = {
+  type: 'dc' | 'campus',
+  id: string,           // Ship ID or Transport ID
+  transportMode: string, // campus only
+  dest: string,         // DC code or destination code
+  pallets: [],          // { pos, palletID, sku, merv, qty }
+  position: 1,
+}
+*/
+
+let pendingPallet = null; // pallet lookup result awaiting confirm
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  const idleInput = document.getElementById('idle-input');
+  idleInput.focus();
+  idleInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const val = idleInput.value.trim().toUpperCase();
+      if (val) { handleOpeningScan(val); idleInput.value = ''; }
+    }
+  });
+
+  const sessInput = document.getElementById('session-input');
+  sessInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const val = sessInput.value.trim().toUpperCase();
+      if (val) { handleSessionScan(val); sessInput.value = ''; }
+    }
+  });
+});
+
+// ─────────────────────────────────────────────
+// SCAN TYPE DETECTION
+// ─────────────────────────────────────────────
+function detectScanType(val) {
+  // Destination code — in known list
+  if (DESTINATION_CODES.includes(val)) return 'destination';
+  // Transport — starts with known prefix
+  if (TRANSPORT_PREFIXES.some(p => val.startsWith(p))) return 'transport';
+  // Packing slip — starts with 6 digits (MMDDYY-)
+  if (/^\d{6}-/.test(val)) return 'packingslip';
+  // Master Pallet Label barcode — FB-MMDDYY-xxx-NNN
+  if (/^FB-\d{6}-/.test(val)) return 'pallet';
+  // Unknown
+  return 'unknown';
+}
+
+// ─────────────────────────────────────────────
+// OPENING SCAN — idle state
+// ─────────────────────────────────────────────
+function handleOpeningScan(val) {
+  const type = detectScanType(val);
+  const statusEl = document.getElementById('idle-status');
+
+  if (type === 'packingslip') {
+    startDCSession(val);
+  } else if (type === 'transport') {
+    startCampusSession(val);
+  } else if (type === 'destination') {
+    statusEl.textContent = '⚠ Destination codes are used to close a campus transfer, not open one. Scan a Transport barcode first.';
+  } else if (type === 'pallet') {
+    statusEl.textContent = '⚠ That looks like a pallet barcode. Scan a Packing Slip or Transport barcode to open a session first.';
+  } else {
+    statusEl.textContent = '⚠ Unrecognized barcode: ' + val + '. Scan a Packing Slip or Transport ID to begin.';
+  }
+}
+
+// ─────────────────────────────────────────────
+// START DC SESSION
+// ─────────────────────────────────────────────
+async function startDCSession(shipID) {
+  session = { type: 'dc', id: shipID, pallets: [], position: 1, dest: '', driver: '', truck: '', carrier: '', trailerNum: '' };
+  showSessionUI();
+
+  document.getElementById('session-card').className        = 'session-card dc';
+  document.getElementById('session-type-label').textContent = '▲ DC Shipment Session';
+  document.getElementById('session-id-display').textContent = shipID;
+  document.getElementById('session-meta').innerHTML =
+    metaField('Opened', nowStr()) + metaField('Pallets', '0') + metaField('Status', 'LOADING');
+  document.getElementById('dc-fields-wrap').style.display  = '';
+  document.getElementById('session-input').className       = 'scan-input session-dc';
+  document.getElementById('scan-hint').innerHTML =
+    '<strong>DC Shipment:</strong> Scan pallet barcodes one at a time. ' +
+    'When loading is complete, <strong>scan the Packing Slip barcode again</strong> to close and print.';
+
+  // Auto-lookup packing slip data
+  setStatus(`<span class="stag stag-info">LOOKING UP</span> Packing slip <span class="mono">${shipID}</span>…`, 'info');
+  try {
+    const url = WEB_APP_URL + '?action=lookupPackingSlip&shipID=' + encodeURIComponent(shipID);
+    const resp = await fetch(url);
+    const json = await resp.json();
+    if (json.result === 'success' && json.record) {
+      const r = json.record;
+      session.dest       = r.shipTo     || '';
+      session.driver     = r.loadedBy   || '';
+      session.carrier    = r.carrier    || '';
+      session.trailerNum = r.trailerNum || '';
+      document.getElementById('dc-shipto').textContent   = r.shipTo     || '—';
+      document.getElementById('dc-carrier').textContent  = r.carrier    || '—';
+      document.getElementById('dc-trailer').textContent  = r.trailerNum || '—';
+      document.getElementById('dc-loadedby').textContent = r.loadedBy   || '—';
+      // Update session meta with destination
+      document.getElementById('session-meta').innerHTML =
+        metaField('Ship To', r.shipTo || '—') + metaField('Pallets', '0') + metaField('Trailer', r.trailerNum || '—');
+      setStatus(`<span class="stag stag-ok">READY</span> Packing slip found — <strong>${r.shipTo || '—'}</strong> via ${r.carrier || '—'}. Scan first pallet.`, 'ok');
+    } else {
+      setStatus(`<span class="stag stag-warn">NOT FOUND</span> Packing slip <strong>${shipID}</strong> not in sheet — was it printed from the Master Packing Slip Generator? You can still scan pallets.`, 'warn');
+    }
+  } catch(e) {
+    setStatus(`<span class="stag stag-warn">LOOKUP FAILED</span> Could not retrieve packing slip data. You can still scan pallets.`, 'warn');
+  }
+
+  toast('DC session opened — ' + shipID);
+}
+
+// ─────────────────────────────────────────────
+// START CAMPUS SESSION
+// ─────────────────────────────────────────────
+function startCampusSession(transportID) {
+  // Determine transport mode from prefix
+  let mode = 'Vehicle';
+  if (transportID.startsWith('BT-'))  mode = 'Box Truck';
+  if (transportID.startsWith('PUP-')) mode = 'PUP Trailer';
+  if (transportID.startsWith('FB-') && !transportID.match(/^FB-\d{6}-/)) mode = 'FB Trailer';
+
+  session = { type: 'campus', id: transportID, transportMode: mode, pallets: [], position: 1, dest: '' };
+  showSessionUI();
+
+  document.getElementById('session-card').className   = 'session-card campus';
+  document.getElementById('session-type-label').textContent = '↔ Campus Transfer Session';
+  document.getElementById('session-id-display').textContent = transportID;
+  document.getElementById('session-meta').innerHTML =
+    metaField('Transport', mode) + metaField('Opened', nowStr()) + metaField('Pallets', '0');
+  document.getElementById('dc-fields-wrap').style.display = 'none';
+  document.getElementById('session-input').className  = 'scan-input session-campus';
+  document.getElementById('scan-hint').innerHTML =
+    '<strong>Campus Transfer:</strong> Scan pallet barcodes to add them to this transfer. ' +
+    'When loading is complete, <strong>scan the Destination barcode</strong> at the drop-off point to close the session.';
+
+  toast('Campus session opened — ' + transportID);
+}
+
+// ─────────────────────────────────────────────
+// SESSION SCAN — active session
+// ─────────────────────────────────────────────
+async function handleSessionScan(val) {
+  const type = detectScanType(val);
+
+  // Closing scan
+  if (session.type === 'dc' && type === 'packingslip' && val === session.id) {
+    showCloseSessionPopup();
+    return;
+  }
+  if (session.type === 'campus' && type === 'destination') {
+    session.dest = val;
+    showCloseSessionPopup();
+    return;
+  }
+
+  // Re-scan of opening ID
+  if (val === session.id && session.type === 'dc') {
+    showCloseSessionPopup();
+    return;
+  }
+
+  // Must be a pallet barcode
+  if (type !== 'pallet') {
+    setStatus(`<span class="stag stag-warn">UNRECOGNIZED</span> <span class="mono">${val}</span> — expected a pallet barcode (FB-MMDDYY-…)`, 'warn');
+    return;
+  }
+
+  // Check for duplicate
+  if (session.pallets.find(p => p.palletID === val)) {
+    setStatus(`<span class="stag stag-warn">DUPLICATE</span> <strong>${val}</strong> is already on this load at position ${session.pallets.find(p=>p.palletID===val).pos}.`, 'warn');
+    return;
+  }
+
+  // Max position check
+  if (session.position > 26) {
+    setStatus(`<span class="stag stag-warn">FULL</span> Maximum 26 pallet positions reached.`, 'warn');
+    return;
+  }
+
+  // Look up pallet from sheet
+  setStatus(`<span class="stag stag-info">LOOKING UP</span> <span class="mono">${val}</span>…`, 'info');
+  const record = await lookupPallet(val);
+
+  if (!record) {
+    setStatus(`<span class="stag stag-error">NOT FOUND</span> <strong>${val}</strong> — not in Pallet Log. Was this label printed from Master Pallet Label?`, 'error');
+    return;
+  }
+
+  // Show confirm popup
+  pendingPallet = { palletID: val, pos: session.position, ...record };
+  const box = document.getElementById('pallet-popup-box');
+  box.className = 'popup-box ' + (session.type === 'dc' ? 'dc-popup' : 'campus-popup');
+  document.getElementById('pallet-popup-title').textContent = `Position ${session.position} — Confirm Pallet`;
+  document.getElementById('pallet-popup-detail').innerHTML =
+    `<span class="pk">Pallet ID</span><span class="pv">${val}</span>` +
+    `<span class="pk">SKU</span><span class="pv">${record.sku}</span>` +
+    `<span class="pk">MERV</span><span class="pv">${record.merv}</span>` +
+    `<span class="pk">Qty</span><span class="pv">${record.qty}</span>` +
+    `<span class="pk">Destination</span><span class="pv">${record.dest || '—'}</span>` +
+    `<span class="pk">Inspected By</span><span class="pv">${record.inspectedBy || '—'}</span>`;
+  document.getElementById('pallet-popup').classList.add('open');
+}
+
+async function confirmPallet() {
+  closePopup('pallet-popup');
+  if (!pendingPallet) return;
+  const p = pendingPallet;
+  const now = nowStr();
+
+  // Log to sheet
+  try {
+    if (session.type === 'dc') {
+      await postToSheet({
+        action:      'logDCTransfer',
+        shipID:      session.id,
+        palletID:    p.palletID,
+        palletPos:   p.pos,
+        sku:         p.sku,
+        merv:        p.merv,
+        qty:         p.qty,
+        destination: session.dest       || '',
+        driver:      session.driver     || '',
+        truck:       session.trailerNum || '',
+        carrier:     session.carrier    || '',
+        scanTime:    now
+      });
+    } else {
+      await postToSheet({
+        action:        'logCampusTransfer',
+        transferID:    session.id,
+        palletID:      p.palletID,
+        palletPos:     p.pos,
+        sku:           p.sku,
+        merv:          p.merv,
+        qty:           p.qty,
+        destination:   session.dest || '',
+        transportMode: session.transportMode,
+        scanTime:      now
+      });
+    }
+  } catch(e) {
+    setStatus(`<span class="stag stag-error">LOG ERROR</span> ${e.message} — pallet NOT recorded.`, 'error');
+    pendingPallet = null;
+    return;
+  }
+
+  // Add to local list
+  session.pallets.push(p);
+  session.position++;
+  addPalletRow(p);
+  updatePalletCount();
+
+  setStatus(
+    `<span class="stag stag-ok">ADDED</span> <strong>${p.palletID}</strong> → Position ${p.pos} &nbsp;·&nbsp; ${p.sku} ${p.merv} &nbsp;·&nbsp; Qty: ${p.qty}`,
+    'ok'
+  );
+  toast('Position ' + p.pos + ' logged ✓');
+  pendingPallet = null;
+
+  // Re-focus scan input
+  setTimeout(() => document.getElementById('session-input').focus(), 100);
+}
+
+// ─────────────────────────────────────────────
+// CLOSE SESSION
+// ─────────────────────────────────────────────
+function showCloseSessionPopup() {
+  if (session.pallets.length === 0) {
+    setStatus(`<span class="stag stag-warn">EMPTY</span> No pallets scanned yet. Scan at least one pallet before closing.`, 'warn');
+    return;
+  }
+
+  const totalQty = session.pallets.reduce((a, p) => a + parseInt(p.qty||0), 0);
+  const dest = session.type === 'dc'
+    ? (session.dest || '—')
+    : session.dest || '—';
+
+  document.getElementById('close-popup-box').className =
+    'popup-box ' + (session.type === 'dc' ? 'dc-popup' : 'campus-popup');
+  document.getElementById('close-popup-title').textContent =
+    session.type === 'dc' ? 'Close DC Shipment' : 'Close Campus Transfer';
+  document.getElementById('close-popup-detail').innerHTML =
+    `<span class="pk">${session.type === 'dc' ? 'Ship ID' : 'Transfer ID'}</span><span class="pv">${session.id}</span>` +
+    `<span class="pk">Destination</span><span class="pv">${dest}</span>` +
+    `<span class="pk">Pallets</span><span class="pv">${session.pallets.length}</span>` +
+    `<span class="pk">Total Filters</span><span class="pv">${totalQty.toLocaleString()}</span>` +
+    (session.type === 'dc' ? `<span class="pk">Driver</span><span class="pv">${document.getElementById('dc-driver').value||'—'}</span>` : '') +
+    (session.type === 'dc' ? `<span class="pk">Truck</span><span class="pv">${document.getElementById('dc-truck').value||'—'}</span>` : '');
+
+  const btn = document.getElementById('close-confirm-btn');
+  btn.textContent = session.type === 'dc' ? '✓ Close & Print Packing Slip' : '✓ Close Transfer';
+  document.getElementById('close-popup').classList.add('open');
+}
+
+async function confirmCloseSession() {
+  closePopup('close-popup');
+
+  if (session.type === 'dc') {
+    // Deduct inventory
+    try {
+      await postToSheet({
+        action:  'closeDCSession',
+        shipID:  session.id,
+        pallets: session.pallets.map(p => ({ sku: p.sku, merv: p.merv, qty: p.qty }))
+      });
+    } catch(e) {
+      toast('Inventory deduct failed: ' + e.message, true);
+    }
+    // Print packing slip reprint
+    printPackingSlip();
+  } else {
+    toast('Campus transfer closed — ' + session.id + ' → ' + session.dest);
+  }
+
+  resetSession();
+}
+
+// ─────────────────────────────────────────────
+// PACKING SLIP REPRINT
+// ─────────────────────────────────────────────
+function printPackingSlip() {
+  const s = session;
+  const dest   = session.dest       || '—';
+  const driver = session.driver     || '—';
+  const truck  = session.trailerNum || session.truck || '—';
+  const now = new Date().toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})
+            + ' ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+
+  // Build item rows — one line per SKU per position
+  let lineNum = 1;
+  let rows = '';
+  for (const p of s.pallets) {
+    rows += `<tr>
+      <td>${lineNum++}</td>
+      <td>${p.pos}</td>
+      <td style="font-family:monospace">${p.palletID}</td>
+      <td><strong>${p.sku}</strong></td>
+      <td style="text-align:center">${p.merv}</td>
+      <td style="text-align:right">${parseInt(p.qty).toLocaleString()}</td>
+    </tr>`;
+  }
+
+  const totalQty = s.pallets.reduce((a,p) => a + parseInt(p.qty||0), 0);
+  const barcodeVal = s.id;
+
+  // Build Code128 SVG inline
+  const svgId = 'bc-slip';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Packing Slip — ${s.id}</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+@page { size:8.5in 11in; margin:0.35in 0.45in; }
+body { font-family:Arial,Helvetica,sans-serif; font-size:9pt; color:#000; background:#fff; }
+.outer { border:3px solid #000; width:100%; display:flex; flex-direction:column; }
+.brand-bar { background:#1A4A2E; padding:6px 14px; display:flex; align-items:baseline; justify-content:space-between; flex-shrink:0; }
+.brand-name { font-size:20pt; font-weight:900; color:#fff; letter-spacing:1.5px; font-family:'Arial Black',Arial,sans-serif; }
+.brand-tag  { font-size:7pt; font-style:italic; color:#3DAA6A; margin-left:10px; }
+.brand-right { font-size:7pt; color:#D6EDE0; text-transform:uppercase; letter-spacing:1px; text-align:right; line-height:1.7; }
+.stripe { height:4px; background:linear-gradient(90deg,#2E7D4F,#3DAA6A,#2E7D4F); flex-shrink:0; }
+.meta-grid { display:grid; grid-template-columns:repeat(4,1fr); border-bottom:2px solid #000; flex-shrink:0; }
+.meta-cell { padding:5px 10px; border-right:1px solid #ccc; display:flex; flex-direction:column; }
+.meta-cell:last-child { border-right:none; }
+.meta-lbl { font-size:5.5pt; font-weight:700; text-transform:uppercase; color:#2E7D4F; letter-spacing:1px; margin-bottom:2px; }
+.meta-val { font-size:11pt; font-weight:700; color:#000; line-height:1.1; }
+.addr-section { display:grid; grid-template-columns:1fr 1fr; border-bottom:2px solid #000; flex-shrink:0; }
+.addr-block { padding:8px 12px; border-right:1px solid #ccc; }
+.addr-block:last-child { border-right:none; }
+.addr-lbl { font-size:5.5pt; font-weight:700; text-transform:uppercase; color:#2E7D4F; letter-spacing:1px; margin-bottom:4px; }
+.addr-name { font-size:11pt; font-weight:700; color:#000; }
+.addr-line { font-size:9pt; color:#333; line-height:1.5; }
+.sec-hdr { background:#1A4A2E; padding:3px 10px; font-size:6.5pt; font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:1px; flex-shrink:0; }
+table { width:100%; border-collapse:collapse; }
+th { background:#f2f2f2; font-size:6pt; font-weight:700; text-transform:uppercase; color:#555; padding:4px 8px; border-bottom:1px solid #ccc; text-align:left; }
+td { font-size:8.5pt; padding:3px 8px; border-bottom:1px solid #eee; }
+tr:nth-child(even) td { background:#fafafa; }
+.total-row td { font-weight:700; border-top:2px solid #000; background:#f2f2f2; }
+.bottom-row { display:grid; grid-template-columns:1fr auto; border-top:2px solid #000; flex-shrink:0; }
+.footer-info { padding:8px 12px; display:flex; flex-direction:column; justify-content:center; gap:3px; }
+.footer-ref { font-size:7pt; color:#555; }
+.footer-ref span { font-weight:700; color:#000; }
+.footer-created { font-size:6pt; color:#aaa; margin-top:4px; }
+.barcode-block { padding:8px 12px 8px 8px; display:flex; flex-direction:column; align-items:center; justify-content:center; border-left:1px solid #ccc; }
+.bc-id { font-size:6pt; color:#888; margin-top:2px; text-align:center; }
+</style>
+</head><body>
+<div class="outer">
+  <div class="brand-bar">
+    <div><span class="brand-name">FILTERBUY</span><span class="brand-tag">Better Air For All.</span></div>
+    <div class="brand-right">Filterbuy Talladega · Packing Slip<br>Intercompany Shipment</div>
+  </div>
+  <div class="stripe"></div>
+  <div class="meta-grid">
+    <div class="meta-cell"><span class="meta-lbl">Ship ID</span><span class="meta-val">${s.id}</span></div>
+    <div class="meta-cell"><span class="meta-lbl">Driver</span><span class="meta-val">${driver}</span></div>
+    <div class="meta-cell"><span class="meta-lbl">Truck / Trailer</span><span class="meta-val">${truck}</span></div>
+    <div class="meta-cell"><span class="meta-lbl">Printed</span><span class="meta-val">${now}</span></div>
+  </div>
+  <div class="addr-section">
+    <div class="addr-block">
+      <div class="addr-lbl">Ship From</div>
+      <div class="addr-name">Filterbuy Talladega</div>
+      <div class="addr-line">1 Commodore Drive</div>
+      <div class="addr-line">Talladega, AL 35160</div>
+    </div>
+    <div class="addr-block">
+      <div class="addr-lbl">Ship To</div>
+      <div class="addr-name">${dest}</div>
+    </div>
+  </div>
+  <div class="sec-hdr">Item List — ${s.pallets.length} pallet position(s) · ${totalQty.toLocaleString()} total filters</div>
+  <table>
+    <thead><tr>
+      <th style="width:22pt">#</th>
+      <th style="width:28pt">Pos</th>
+      <th style="width:90pt">Pallet ID</th>
+      <th>SKU / Size</th>
+      <th style="width:40pt;text-align:center">MERV</th>
+      <th style="width:48pt;text-align:right">Qty</th>
+    </tr></thead>
+    <tbody>
+      ${rows}
+      <tr class="total-row">
+        <td colspan="5" style="text-align:right">TOTAL FILTERS:</td>
+        <td style="text-align:right">${totalQty.toLocaleString()}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="bottom-row">
+    <div class="footer-info">
+      <div class="footer-ref">Ship ID: <span>${s.id}</span></div>
+      <div class="footer-ref">Route: <span>Filterbuy Talladega → ${dest}</span></div>
+      <div class="footer-created">Printed: ${now} · Filterbuy Talladega Scan Interface</div>
+    </div>
+    <div class="barcode-block">
+      <svg id="${svgId}"></svg>
+      <div class="bc-id">${barcodeVal}</div>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"><\/script>
+<script>
+window.onload = function() {
+  JsBarcode('#${svgId}', '${barcodeVal}', {
+    format:'CODE128', width:1.8, height:50, displayValue:false, margin:4,
+    background:'#ffffff', lineColor:'#000000'
+  });
+  setTimeout(() => window.print(), 400);
+};
+<\/script>
+</body></html>`;
+
+  const popup = window.open('', '_blank', 'width=800,height=900,scrollbars=1');
+  if (!popup) { alert('Pop-up blocked — allow pop-ups and try again.'); return; }
+  popup.document.open();
+  popup.document.write(html);
+  popup.document.close();
+}
+
+// ─────────────────────────────────────────────
+// SHEET CALLS
+// ─────────────────────────────────────────────
+async function lookupPallet(palletID) {
+  const url = WEB_APP_URL + '?action=lookupPalletLog&palletID=' + encodeURIComponent(palletID);
+  const resp = await fetch(url);
+  const json = await resp.json();
+  if (json.result === 'success' && json.records && json.records.length > 0) {
+    return json.records[0]; // most recent record for this pallet ID
+  }
+  return null;
+}
+
+async function postToSheet(payload) {
+  const resp = await fetch(WEB_APP_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  const json = await resp.json();
+  if (json.result !== 'success' && json.status !== 'ok') {
+    throw new Error(json.error || 'Sheet error');
+  }
+  return json;
+}
+
+// ─────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────
+function showSessionUI() {
+  document.getElementById('state-idle').style.display    = 'none';
+  document.getElementById('state-session').style.display = '';
+  setTimeout(() => document.getElementById('session-input').focus(), 100);
+}
+
+function resetSession() {
+  session = null;
+  pendingPallet = null;
+  document.getElementById('state-idle').style.display    = '';
+  document.getElementById('state-session').style.display = 'none';
+  document.getElementById('idle-input').value = '';
+  document.getElementById('idle-status').textContent = '';
+  // Clear pallet list (keep header row)
+  const list = document.getElementById('pallet-list');
+  const header = list.querySelector('.header');
+  list.innerHTML = '';
+  list.appendChild(header);
+  document.getElementById('pallet-count').textContent = '0';
+  setTimeout(() => document.getElementById('idle-input').focus(), 100);
+}
+
+function cancelSession() {
+  if (session && session.pallets.length > 0) {
+    if (!confirm(`Cancel session ${session.id}? ${session.pallets.length} pallet(s) already logged to sheet will remain in the transfer tab.`)) return;
+  }
+  resetSession();
+  toast('Session cancelled');
+}
+
+function addPalletRow(p) {
+  const list = document.getElementById('pallet-list');
+  const row = document.createElement('div');
+  row.className = 'pallet-row';
+  row.innerHTML = `
+    <span class="pr-pos">${p.pos}</span>
+    <span class="pr-id">${p.palletID}</span>
+    <span class="pr-sku">${p.sku}</span>
+    <span class="pr-merv">${p.merv}</span>
+    <span class="pr-qty">${parseInt(p.qty).toLocaleString()}</span>
+  `;
+  list.appendChild(row);
+  list.scrollTop = list.scrollHeight;
+}
+
+function updatePalletCount() {
+  document.getElementById('pallet-count').textContent = session.pallets.length;
+  // Update session meta
+  const metaEl = document.getElementById('session-meta');
+  const fields = metaEl.querySelectorAll('.smf-val');
+  // Update pallets count field (second field for DC, second for campus)
+  if (fields.length >= 2) fields[1].textContent = session.pallets.length;
+}
+
+function metaField(label, val) {
+  return `<div class="session-meta-field">
+    <span class="smf-label">${label}</span>
+    <span class="smf-val">${val}</span>
+  </div>`;
+}
+
+function setStatus(html, type) {
+  const box = document.getElementById('status-box');
+  box.innerHTML = html;
+  box.className = type || '';
+}
+
+function closePopup(id) {
+  document.getElementById(id).classList.remove('open');
+  setTimeout(() => document.getElementById('session-input').focus(), 50);
+}
+
+function toast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isErr ? ' err' : '');
+  setTimeout(() => t.className = '', 2800);
+}
+
+function nowStr() {
+  return new Date().toLocaleString('en-US', {
+    month:'2-digit', day:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit', hour12:true
+  });
+}
+</script>
+</body>
+</html>
