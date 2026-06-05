@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>House Label Print | Filterbuy Tools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fb-green: #008533;
+    --fb-green-dark: #005c23;
+    --fb-green-light: #e6f4ec;
+    --fb-green-mid: #00a040;
+    --ink: #111;
+    --ink-2: #444;
+    --ink-3: #888;
+    --rule: #d8d8d8;
+    --surface: #f5f5f3;
+    --white: #ffffff;
+    --font-ui: 'Barlow', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-display: 'Barlow Condensed', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-ui);
+    background: var(--surface);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--fb-green);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .header-logo {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+  .header-logo span {
+    opacity: 0.65;
+    font-weight: 600;
+    margin-left: 6px;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+  }
+  .header-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 0;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 2rem 1.5rem;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* ── PANEL ── */
+  .panel {
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .panel-header {
+    background: var(--ink);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .panel-header-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--fb-green);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .panel-header-icon svg { width: 16px; height: 16px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .panel-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .panel-body { padding: 20px; }
+
+  /* ── FORM FIELDS ── */
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ink-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .field select,
+  .field input[type="date"] {
+    width: 100%;
+    height: 42px;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--surface);
+    padding: 0 12px;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .field select:focus,
+  .field input[type="date"]:focus {
+    outline: none;
+    border-color: var(--fb-green);
+    background: var(--white);
+  }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--ink-3);
+    pointer-events: none;
+  }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--rule); margin: 20px 0; }
+
+  /* ── PRINT BUTTON ── */
+  .btn-print {
+    width: 100%;
+    height: 48px;
+    background: var(--fb-green);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn-print:hover { background: var(--fb-green-dark); }
+  .btn-print:active { transform: scale(0.98); }
+  .btn-print svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── SPEC NOTE ── */
+  .spec-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--fb-green-light);
+    border: 1px solid #b3dcc0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 18px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fb-green-dark);
+    letter-spacing: 0.03em;
+  }
+  .spec-note svg { width: 14px; height: 14px; fill: none; stroke: var(--fb-green); stroke-width: 2; flex-shrink: 0; }
+
+  /* ── PREVIEW PANEL ── */
+  .preview-panel { position: sticky; top: 2rem; }
+  .preview-sheet {
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .preview-sheet-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    align-self: flex-start;
+  }
+
+  /* Label sheet visual */
+  .sheet-visual {
+    width: 100%;
+    max-width: 460px;
+    aspect-ratio: 8.5 / 11;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 5.88% 1.84% 5.88% 1.84%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(7, 1fr);
+    gap: 0 1.47%;
+    row-gap: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .sheet-label {
+    border: 1px solid #d0d0d0;
+    border-radius: 5px;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .sheet-label .sl-line1 {
+    font-family: var(--font-display);
+    font-size: clamp(9px, 1.8vw, 14px);
+    font-weight: 800;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+  .sheet-label .sl-line2 {
+    font-family: var(--font-mono);
+    font-size: clamp(7px, 1.1vw, 9px);
+    color: var(--ink-3);
+    margin-top: 2px;
+    white-space: nowrap;
+  }
+
+  /* ── PRINT HINT ── */
+  .print-hint {
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .print-hint strong { color: var(--ink-2); font-weight: 500; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    border-top: 1px solid var(--rule);
+    margin-top: auto;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 750px) {
+    main { grid-template-columns: 1fr; padding: 1rem; gap: 1.5rem; }
+    .preview-panel { position: static; }
+  }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    body * { visibility: hidden !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="header-logo" href="#">FILTERBUY<span>/ TOOLS</span></a>
+  <span class="header-badge">TALLADEGA OPS</span>
+</header>
+
+<main>
+  <!-- LEFT: Controls -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M7 8V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3"/><circle cx="17" cy="13" r="1" fill="#fff"/></svg>
+        </div>
+        <span class="panel-title">House Label Generator</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="spec-note">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/></svg>
+          HL-5162 &nbsp;·&nbsp; 4.0" × 1⅓" &nbsp;·&nbsp; 2 col × 7 row &nbsp;·&nbsp; 14 labels/sheet
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Day of Week</label>
+            <div class="select-wrap">
+              <select id="sel-day">
+                <option value="MON">MON</option>
+                <option value="TUE" selected>TUE</option>
+                <option value="WED">WED</option>
+                <option value="THU">THU</option>
+                <option value="FRI">FRI</option>
+                <option value="SAT">SAT</option>
+                <option value="SUN">SUN</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Dest. DC</label>
+            <div class="select-wrap">
+              <select id="sel-dc">
+                <option value="DALLAS">DALLAS</option>
+                <option value="ELGIN">ELGIN</option>
+                <option value="ORLANDO" selected>ORLANDO</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Load Date</label>
+          <input type="date" id="inp-date">
+        </div>
+
+        <hr class="divider">
+
+        <button class="btn-print" onclick="doPrint()">
+          <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M7 8V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3"/><circle cx="17" cy="13" r="1" fill="#fff"/></svg>
+          Print Sheet — 14 Labels
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Sheet Preview -->
+  <div class="preview-panel">
+    <div class="preview-sheet">
+      <div class="preview-sheet-title">Sheet preview — Letter · Portrait</div>
+      <div class="sheet-visual" id="sheet-visual"></div>
+      <p class="print-hint">
+        Browser print settings: <strong>Letter · Portrait</strong><br>
+        Margins: <strong>None</strong> &nbsp;·&nbsp; Scale: <strong>100%</strong>
+      </p>
+    </div>
+  </div>
+</main>
+
+<footer>Filterbuy Talladega · Intercompany Shipping &amp; Transportation · House Label Print Tool</footer>
+
+<script>
+  const dayEl  = document.getElementById('sel-day');
+  const dcEl   = document.getElementById('sel-dc');
+  const dateEl = document.getElementById('inp-date');
+  const sheetEl = document.getElementById('sheet-visual');
+
+  function todayISO() {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  }
+
+  function fmtDate(val) {
+    if (!val) return '';
+    const [y, m, d] = val.split('-');
+    return `${m}-${d}-${y.slice(-2)}`;
+  }
+
+  dateEl.value = todayISO();
+
+  function getLine1() { return `${dayEl.value} – ${dcEl.value}`; }
+  function getLine2() { return fmtDate(dateEl.value); }
+
+  function buildSheet() {
+    const l1 = getLine1();
+    const l2 = getLine2();
+    let html = '';
+    for (let i = 0; i < 14; i++) {
+      html += `<div class="sheet-label">
+        <div class="sl-line1">${l1}</div>
+        <div class="sl-line2">${l2}</div>
+      </div>`;
+    }
+    sheetEl.innerHTML = html;
+  }
+
+  dayEl.addEventListener('change', buildSheet);
+  dcEl.addEventListener('change', buildSheet);
+  dateEl.addEventListener('change', buildSheet);
+  buildSheet();
+
+  function doPrint() {
+    const l1 = getLine1();
+    const l2 = getLine2();
+
+    let cells = '';
+    for (let i = 0; i < 14; i++) {
+      cells += `
+        <td style="
+          width:4in;
+          height:1.3333in;
+          border:0.5pt solid #bbb;
+          border-radius:6pt;
+          padding:0 14pt;
+          vertical-align:middle;
+          overflow:hidden;
+        ">
+          <div style="font-family:'Barlow Condensed',Arial,sans-serif;font-size:22pt;font-weight:800;line-height:1.15;letter-spacing:-0.3pt;">${l1}</div>
+          <div style="font-family:'DM Mono','Courier New',monospace;font-size:9pt;color:#666;margin-top:3pt;">${l2}</div>
+        </td>`;
+      if (i % 2 === 1) cells = cells.replace(/^/, '') + '</tr><tr>';
+    }
+
+    // rebuild properly
+    let rows = '';
+    for (let r = 0; r < 7; r++) {
+      rows += `<tr>
+        <td style="width:4in;height:1.3333in;border:0.5pt solid #bbb;border-radius:6pt;padding:0 10pt;vertical-align:middle;overflow:hidden;">
+          <div style="font-family:'Barlow Condensed',Arial,sans-serif;font-size:36pt;font-weight:800;line-height:1.1;letter-spacing:-0.5pt;white-space:nowrap;">${l1}</div>
+          <div style="font-family:'DM Mono','Courier New',monospace;font-size:11pt;color:#555;margin-top:2pt;">${l2}</div>
+        </td>
+        <td style="width:4in;height:1.3333in;border:0.5pt solid #bbb;border-radius:6pt;padding:0 10pt;vertical-align:middle;overflow:hidden;">
+          <div style="font-family:'Barlow Condensed',Arial,sans-serif;font-size:36pt;font-weight:800;line-height:1.1;letter-spacing:-0.5pt;white-space:nowrap;">${l1}</div>
+          <div style="font-family:'DM Mono','Courier New',monospace;font-size:11pt;color:#555;margin-top:2pt;">${l2}</div>
+        </td>
+      </tr>`;
+    }
+
+    const doc = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@800&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+  @page { size: letter portrait; margin: 0; }
+  body { margin: 0; padding: 0; }
+  .spacer { height: 0.875in; display: block; }
+  .left-pad { padding-left: 0.15625in; }
+  table { border-collapse: separate; border-spacing: 0.125in 0; padding-left: 0.15625in; }
+  td { box-sizing: border-box; }
+</style>
+</head><body>
+<div class="spacer"></div>
+<table>${rows}</table>
+<script>
+  document.fonts.ready.then(function(){ window.print(); });
+<\/script>
+</body></html>`;
+
+    const win = window.open('', '_blank', 'width=950,height=750');
+    if (win) { win.document.open(); win.document.write(doc); win.document.close(); }
+  }
+</script>
+</body>
+</html>
