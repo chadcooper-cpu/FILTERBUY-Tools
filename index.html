@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Filterbuy Talladega — Tools</title>
+<title>Filterbuy Tools — Talladega</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -11,217 +11,209 @@
     --green-mid:   #2E7D4F;
     --green-light: #3DAA6A;
     --green-pale:  #D6EDE0;
-    --ink:         #0d1f13;
-    --muted:       #6b8f78;
-    --border:      #b4d4c0;
-    --white:       #f9fdf9;
+    --ink:   #0d1f13;
+    --muted: #5a7a65;
+    --border:#b4d4c0;
+    --bg:    #f0f7f2;
+    --white: #ffffff;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: 'Barlow', sans-serif;
-    background: var(--green-dark);
+    background: var(--bg);
+    color: var(--ink);
     min-height: 100vh;
-    color: var(--white);
   }
 
   /* ── HEADER ── */
   .site-header {
-    background: linear-gradient(180deg, #0d2b1a 0%, var(--green-dark) 100%);
-    border-bottom: 3px solid var(--green-mid);
-    padding: 28px 32px 24px;
+    background: var(--green-dark);
+    padding: 18px 32px 16px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    justify-content: space-between;
   }
-  .logo-block {
-    background: var(--green-mid);
-    padding: 8px 16px;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 1;
-  }
-  .logo-block .logo-main {
+  .header-brand { display: flex; flex-direction: column; line-height: 1; }
+  .brand-name {
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 900;
-    font-size: 1.5rem;
-    letter-spacing: 2px;
-    color: #fff;
+    font-weight: 900; font-size: 2rem;
+    color: #fff; letter-spacing: 2px;
   }
-  .logo-block .logo-tag {
-    font-size: 0.52rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--green-pale);
-    margin-top: 2px;
+  .brand-tag {
+    font-size: 0.6rem; color: var(--green-light);
+    letter-spacing: 3px; text-transform: uppercase; margin-top: 3px;
   }
-  .header-text h1 {
+  .header-right {
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800;
-    font-size: 1.6rem;
-    color: var(--white);
-    letter-spacing: 1px;
+    font-size: 0.72rem; color: var(--green-pale);
+    letter-spacing: 2px; text-transform: uppercase; text-align: right;
+    line-height: 1.7;
   }
-  .header-text p {
-    font-size: 0.68rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 3px;
+  .header-stripe {
+    height: 4px;
+    background: linear-gradient(90deg, #2E7D4F, #3DAA6A, #2E7D4F);
   }
 
   /* ── MAIN ── */
-  .main {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 36px 24px 60px;
-  }
+  main { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
 
   /* ── SECTION ── */
+  .section { margin-bottom: 32px; }
   .section-label {
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--green-light);
-    margin-bottom: 14px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-weight: 700; font-size: 0.72rem;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--green-mid);
+    border-bottom: 2px solid var(--green-pale);
+    padding-bottom: 6px; margin-bottom: 16px;
   }
-  .section + .section { margin-top: 36px; }
 
   /* ── TOOL GRID ── */
   .tool-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 14px;
   }
 
+  /* ── TOOL CARD ── */
   .tool-card {
-    display: block;
-    text-decoration: none;
-    background: rgba(255,255,255,0.04);
-    border: 1.5px solid rgba(255,255,255,0.10);
+    background: var(--white);
+    border: 1.5px solid var(--border);
     border-radius: 10px;
-    padding: 18px 20px 16px;
-    transition: background 0.15s, border-color 0.15s, transform 0.1s;
-    cursor: pointer;
+    padding: 20px 18px 16px;
+    text-decoration: none;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.1s;
+    box-shadow: 0 2px 8px rgba(26,74,46,0.06);
   }
   .tool-card:hover {
-    background: rgba(255,255,255,0.09);
     border-color: var(--green-light);
+    box-shadow: 0 6px 20px rgba(26,74,46,0.14);
     transform: translateY(-2px);
   }
-  .tool-card:active { transform: translateY(0); }
-
-  .tool-icon {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-    display: block;
-  }
+  .tool-icon { font-size: 1.6rem; line-height: 1; margin-bottom: 2px; }
   .tool-name {
     font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800;
-    font-size: 1.05rem;
-    color: var(--white);
-    letter-spacing: 0.5px;
-    line-height: 1.2;
-    margin-bottom: 5px;
+    font-weight: 800; font-size: 1.05rem;
+    color: var(--green-dark); letter-spacing: 0.3px;
+    line-height: 1.1;
   }
   .tool-desc {
-    font-size: 0.72rem;
-    color: var(--muted);
-    line-height: 1.5;
+    font-size: 0.76rem; color: var(--muted);
+    line-height: 1.5; flex: 1;
   }
+
+  /* ── BADGES ── */
   .tool-badge {
     display: inline-block;
-    margin-top: 10px;
-    font-size: 0.58rem;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 3px 8px;
-    border-radius: 20px;
-    font-weight: 700;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 0.6rem;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 3px; margin-top: 4px;
+    width: fit-content;
   }
-  .badge-live    { background: rgba(61,170,106,0.18); color: var(--green-light); border: 1px solid rgba(61,170,106,0.3); }
-  .badge-print   { background: rgba(180,212,192,0.12); color: var(--border); border: 1px solid rgba(180,212,192,0.2); }
-  .badge-scan    { background: rgba(46,125,79,0.25); color: #7de0a8; border: 1px solid rgba(46,125,79,0.4); }
+  .badge-live    { background: var(--green-dark); color: #fff; }
+  .badge-print   { background: var(--green-pale); color: var(--green-dark); }
+  .badge-scan    { background: #003366; color: #fff; }
+  .badge-new     { background: #7A3B00; color: #fff; }
 
   /* ── FOOTER ── */
   .site-footer {
     text-align: center;
-    padding: 24px;
-    font-size: 0.62rem;
+    padding: 20px;
+    font-size: 0.68rem;
     color: var(--muted);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    letter-spacing: 1px;
+    border-top: 1px solid var(--border);
   }
 </style>
 </head>
 <body>
 
 <header class="site-header">
-  <div class="logo-block">
-    <span class="logo-main">FILTERBUY</span>
-    <span class="logo-tag">Better Air For All</span>
+  <div class="header-brand">
+    <span class="brand-name">FILTERBUY</span>
+    <span class="brand-tag">Better Air For All</span>
   </div>
-  <div class="header-text">
-    <h1>Talladega Operations Tools</h1>
-    <p>Intercompany Shipping &amp; Transportation · Internal Use Only</p>
+  <div class="header-right">
+    Talladega Operations Tools<br>
+    Intercompany Shipping &amp; Distribution
   </div>
 </header>
+<div class="header-stripe"></div>
 
-<main class="main">
+<main>
 
-  <!-- SHIPPING & LABELS -->
+  <!-- PALLET & SHIPPING -->
   <div class="section">
-    <div class="section-label">Shipping &amp; Labels</div>
+    <div class="section-label">Pallet Labels &amp; Shipping</div>
     <div class="tool-grid">
-
-      <a class="tool-card" href="Master_Packing_Slip_Generator.html">
-        <span class="tool-icon">📋</span>
-        <div class="tool-name">Master Packing Slip Generator</div>
-        <div class="tool-desc">Paste from load sheet to auto-fill. Prints intercompany packing slip with Code 128 barcode. Logs to DC Transfers sheet.</div>
-        <span class="tool-badge badge-live">Live Logging</span>
-      </a>
 
       <a class="tool-card" href="Master_Pallet_Label.html">
         <span class="tool-icon">🏷️</span>
         <div class="tool-name">Master Pallet Label</div>
-        <div class="tool-desc">4"×6" thermal label for single or mixed pallets. Code 128 barcode, Zebra-ready. Logs to Inventory sheet on confirm.</div>
+        <div class="tool-desc">Generate 4"×6" Zebra thermal pallet labels with Code 128 barcode. Logs to Pope or Newberry Inventory on print.</div>
+        <span class="tool-badge badge-live">Live Logging</span>
+      </a>
+
+      <a class="tool-card" href="Master_Packing_Slip_Generator.html">
+        <span class="tool-icon">📋</span>
+        <div class="tool-name">Master Packing Slip</div>
+        <div class="tool-desc">Generate intercompany packing slips for DC shipments. Paste from load sheet to auto-fill. Logs slip for Scan Interface lookup.</div>
         <span class="tool-badge badge-live">Live Logging</span>
       </a>
 
       <a class="tool-card" href="Pallet_Label_Generator_Avery_5162.html">
         <span class="tool-icon">🗂️</span>
         <div class="tool-name">Pallet Label Generator</div>
-        <div class="tool-desc">Avery 5162 sheet labels — 14-up, 26 labels. Paste load sheet to auto-fill inventory + pallet sticker pairs.</div>
-        <span class="tool-badge badge-print">Print Only</span>
-      </a>
-
-      <a class="tool-card" href="house-label-print.html">
-        <span class="tool-icon">🏠</span>
-        <div class="tool-name">House Label Print</div>
-        <div class="tool-desc">HL-5162 sheet labels — 14-up. Select day of week, destination DC, and load date. Prints full sheet of house labels.</div>
+        <div class="tool-desc">Avery 5162 sheet labels — 14-up, 26 labels. Paste load sheet to auto-fill inventory and pallet sticker pairs.</div>
         <span class="tool-badge badge-print">Print Only</span>
       </a>
 
     </div>
   </div>
 
-  <!-- BARCODE CARDS -->
+  <!-- SCANNING TOOLS -->
   <div class="section">
-    <div class="section-label">Barcode Cards &amp; Campus Transfers</div>
+    <div class="section-label">Scanning Tools</div>
     <div class="tool-grid">
 
-      <a class="tool-card" href="Master_Packing_Slip_Generator.html">
+      <a class="tool-card" href="Scan_Interface.html">
+        <span class="tool-icon">⌖</span>
+        <div class="tool-name">Scan Interface</div>
+        <div class="tool-desc">Live barcode scanning tool for DC shipments and campus transfers. Scan to open, load pallets, close to move inventory.</div>
+        <span class="tool-badge badge-scan">Scan + Inventory</span>
+      </a>
+
+      <a class="tool-card" href="Master_Packing_Slip_Generator.html#qr">
         <span class="tool-icon">📇</span>
         <div class="tool-name">Print Barcode Cards</div>
-        <div class="tool-desc">Print Destination Key Card (all 13 campus destinations) or reprint a single Transport Mode barcode card for torn/missing vehicle cards.</div>
+        <div class="tool-desc">Print Destination Key Card (all 14 campus destinations) or reprint a single Transport Mode barcode card for torn/missing vehicle cards.</div>
+        <span class="tool-badge badge-print">Print Only</span>
+      </a>
+
+      <a class="tool-card" href="Master_Packing_Slip_Generator.html#guide">
+        <span class="tool-icon">📖</span>
+        <div class="tool-name">Scan Sequence Guide</div>
+        <div class="tool-desc">Printable one-page scan sequence reference for employees. Covers DC shipment and campus transfer workflows, barcode types, and rules.</div>
+        <span class="tool-badge badge-print">Print Only</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- HOUSE LABELS -->
+  <div class="section">
+    <div class="section-label">House Labels</div>
+    <div class="tool-grid">
+
+      <a class="tool-card" href="house-label-print.html">
+        <span class="tool-icon">🏠</span>
+        <div class="tool-name">House Label Print</div>
+        <div class="tool-desc">Generate Avery HL-5162 house labels (2×7, 14-up). Select day, DC, and date to print a full sheet.</div>
         <span class="tool-badge badge-print">Print Only</span>
       </a>
 
