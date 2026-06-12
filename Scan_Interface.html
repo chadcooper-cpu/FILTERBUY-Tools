@@ -452,8 +452,8 @@
     <div class="idle-icon">⌖</div>
     <div class="idle-title">Ready to Scan</div>
     <div class="idle-sub">
-      Scan a <strong>Packing Slip barcode</strong> to begin a DC shipment<br>
-      or a <strong>Transport barcode</strong> (BT-341, PUP-32, FB-01) to begin a campus transfer
+      Scan a <strong>Packing Slip barcode</strong> to begin a DC shipment session<br>
+      or a <strong>Transport barcode</strong> (BT-, PUP-, FB-) to begin a campus transfer
     </div>
     <div class="scan-wrap">
       <input type="text" class="scan-input" id="idle-input"
@@ -559,9 +559,29 @@ const WEB_APP_URL = 'https://script.google.com/a/macros/filterbuy.com/s/AKfycbzZ
 
 // Known destination codes from the Destination Key Card
 const DESTINATION_CODES = [
-  'WOODLAND','POPE','WHLSL','AMAZON','3K','RETAIL1','RETAIL2','RETAIL3',
-  'GB1','GB2','NEWBRY','TMS','PIGWHS'
+  'WOODLAND','POPE','WHLSL','AMAZON','3K',
+  'RETAIL1','RETAIL2','RETAIL3',
+  'GB1','GB2','GB3',
+  'NEWBRY','TMS','PIGWHS'
 ];
+
+// Human-readable destination labels
+const DEST_LABELS = {
+  'WOODLAND': 'Woodland',
+  'POPE':     'Pope Shipping',
+  'WHLSL':    'Retail Supply (Wholesale)',
+  'AMAZON':   'Retail Supply (Amazon)',
+  '3K':       '3K Pope Annex',
+  'RETAIL1':  'Retail 1',
+  'RETAIL2':  'Retail 2',
+  'RETAIL3':  'Retail 3',
+  'GB1':      'GB #1',
+  'GB2':      'GB #2',
+  'GB3':      'GB #3',
+  'NEWBRY':   'Newberry Annex',
+  'TMS':      'TMS / Newberry Annex',
+  'PIGWHS':   'Material Warehouse (Pig)',
+};
 
 // Transport ID prefixes
 const TRANSPORT_PREFIXES = ['BT-','PUP-','FB-'];
@@ -612,14 +632,15 @@ window.addEventListener('DOMContentLoaded', () => {
 // SCAN TYPE DETECTION
 // ─────────────────────────────────────────────
 function detectScanType(val) {
-  // Destination code — in known list
+  // Destination code — exact match in known list
   if (DESTINATION_CODES.includes(val)) return 'destination';
-  // Transport — starts with known prefix
+  // Master Pallet Label barcode — FB-MMDDYY-DEST-NNN (6 digits after FB-)
+  // Must check BEFORE transport prefix since both start with FB-
+  if (/^FB-\d{6}-/.test(val)) return 'pallet';
+  // Transport — starts with known prefix (BT-, PUP-, FB-NNN)
   if (TRANSPORT_PREFIXES.some(p => val.startsWith(p))) return 'transport';
   // Packing slip — starts with 6 digits (MMDDYY-)
   if (/^\d{6}-/.test(val)) return 'packingslip';
-  // Master Pallet Label barcode — FB-MMDDYY-xxx-NNN
-  if (/^FB-\d{6}-/.test(val)) return 'pallet';
   // Unknown
   return 'unknown';
 }
@@ -659,8 +680,8 @@ async function startDCSession(shipID) {
   document.getElementById('dc-fields-wrap').style.display  = '';
   document.getElementById('session-input').className       = 'scan-input session-dc';
   document.getElementById('scan-hint').innerHTML =
-    '<strong>DC Shipment:</strong> Scan pallet barcodes one at a time. ' +
-    'When loading is complete, <strong>scan the Packing Slip barcode again</strong> to close and print.';
+    '<strong>DC Shipment:</strong> Scan pallet barcodes one at a time to load them. ' +
+    'When loading is complete, <strong>rescan the Packing Slip barcode</strong> to close, move inventory, and print.';
 
   // Auto-lookup packing slip data
   setStatus(`<span class="stag stag-info">LOOKING UP</span> Packing slip <span class="mono">${shipID}</span>…`, 'info');
@@ -713,8 +734,8 @@ function startCampusSession(transportID) {
   document.getElementById('dc-fields-wrap').style.display = 'none';
   document.getElementById('session-input').className  = 'scan-input session-campus';
   document.getElementById('scan-hint').innerHTML =
-    '<strong>Campus Transfer:</strong> Scan pallet barcodes to add them to this transfer. ' +
-    'When loading is complete, <strong>scan the Destination barcode</strong> at the drop-off point to close the session.';
+    '<strong>Campus Transfer:</strong> Scan pallet barcodes to add them to this load. ' +
+    'At the drop-off point, <strong>scan the Destination barcode</strong> to close the session and move inventory.';
 
   toast('Campus session opened — ' + transportID);
 }
@@ -788,59 +809,20 @@ async function confirmPallet() {
   closePopup('pallet-popup');
   if (!pendingPallet) return;
   const p = pendingPallet;
-  const now = nowStr();
 
-  // Log to sheet
-  try {
-    if (session.type === 'dc') {
-      await postToSheet({
-        action:      'logDCTransfer',
-        shipID:      session.id,
-        palletID:    p.palletID,
-        palletPos:   p.pos,
-        sku:         p.sku,
-        merv:        p.merv,
-        qty:         p.qty,
-        destination: session.dest       || '',
-        driver:      session.driver     || '',
-        truck:       session.trailerNum || '',
-        carrier:     session.carrier    || '',
-        scanTime:    now
-      });
-    } else {
-      await postToSheet({
-        action:        'logCampusTransfer',
-        transferID:    session.id,
-        palletID:      p.palletID,
-        palletPos:     p.pos,
-        sku:           p.sku,
-        merv:          p.merv,
-        qty:           p.qty,
-        destination:   session.dest || '',
-        transportMode: session.transportMode,
-        scanTime:      now
-      });
-    }
-  } catch(e) {
-    setStatus(`<span class="stag stag-error">LOG ERROR</span> ${e.message} — pallet NOT recorded.`, 'error');
-    pendingPallet = null;
-    return;
-  }
-
-  // Add to local list
+  // Add to local session list only — inventory moves on session close, not per-pallet scan
   session.pallets.push(p);
   session.position++;
   addPalletRow(p);
   updatePalletCount();
 
   setStatus(
-    `<span class="stag stag-ok">ADDED</span> <strong>${p.palletID}</strong> → Position ${p.pos} &nbsp;·&nbsp; ${p.sku} ${p.merv} &nbsp;·&nbsp; Qty: ${p.qty}`,
+    `<span class="stag stag-ok">ADDED</span> <strong>${p.palletID}</strong> → Position ${p.pos} &nbsp;·&nbsp; ${p.sku} ${p.merv} &nbsp;·&nbsp; Qty: ${parseInt(p.qty).toLocaleString()}`,
     'ok'
   );
-  toast('Position ' + p.pos + ' logged ✓');
+  toast('Position ' + p.pos + ' ✓');
   pendingPallet = null;
 
-  // Re-focus scan input
   setTimeout(() => document.getElementById('session-input').focus(), 100);
 }
 
@@ -853,10 +835,10 @@ function showCloseSessionPopup() {
     return;
   }
 
-  const totalQty = session.pallets.reduce((a, p) => a + parseInt(p.qty||0), 0);
-  const dest = session.type === 'dc'
+  const totalQty  = session.pallets.reduce((a, p) => a + parseInt(p.qty||0), 0);
+  const destLabel = session.type === 'dc'
     ? (session.dest || '—')
-    : session.dest || '—';
+    : (DEST_LABELS[session.dest] || session.dest || '— scan destination barcode —');
 
   document.getElementById('close-popup-box').className =
     'popup-box ' + (session.type === 'dc' ? 'dc-popup' : 'campus-popup');
@@ -864,35 +846,57 @@ function showCloseSessionPopup() {
     session.type === 'dc' ? 'Close DC Shipment' : 'Close Campus Transfer';
   document.getElementById('close-popup-detail').innerHTML =
     `<span class="pk">${session.type === 'dc' ? 'Ship ID' : 'Transfer ID'}</span><span class="pv">${session.id}</span>` +
-    `<span class="pk">Destination</span><span class="pv">${dest}</span>` +
+    `<span class="pk">Destination</span><span class="pv">${destLabel}</span>` +
     `<span class="pk">Pallets</span><span class="pv">${session.pallets.length}</span>` +
     `<span class="pk">Total Filters</span><span class="pv">${totalQty.toLocaleString()}</span>` +
-    (session.type === 'dc' ? `<span class="pk">Driver</span><span class="pv">${document.getElementById('dc-driver').value||'—'}</span>` : '') +
-    (session.type === 'dc' ? `<span class="pk">Truck</span><span class="pv">${document.getElementById('dc-truck').value||'—'}</span>` : '');
+    (session.type === 'dc' && session.carrier    ? `<span class="pk">Carrier</span><span class="pv">${session.carrier}</span>` : '') +
+    (session.type === 'dc' && session.trailerNum ? `<span class="pk">Trailer</span><span class="pv">${session.trailerNum}</span>` : '') +
+    (session.type === 'campus' && session.transportMode ? `<span class="pk">Transport</span><span class="pv">${session.transportMode}</span>` : '');
 
   const btn = document.getElementById('close-confirm-btn');
-  btn.textContent = session.type === 'dc' ? '✓ Close & Print Packing Slip' : '✓ Close Transfer';
+  btn.textContent = session.type === 'dc' ? '✓ Close & Print Packing Slip' : '✓ Close & Move Inventory';
   document.getElementById('close-popup').classList.add('open');
 }
 
 async function confirmCloseSession() {
   closePopup('close-popup');
 
-  if (session.type === 'dc') {
-    // Deduct inventory
-    try {
+  setStatus(`<span class="stag stag-info"><span class="spinner"></span> CLOSING</span> Posting ${session.pallets.length} pallet(s) to inventory…`, 'info');
+
+  const palletData = session.pallets.map(p => ({
+    palletID: p.palletID,
+    sku:      p.sku,
+    merv:     p.merv,
+    qty:      p.qty,
+    pos:      p.pos,
+  }));
+
+  try {
+    if (session.type === 'dc') {
       await postToSheet({
-        action:  'closeDCSession',
-        shipID:  session.id,
-        pallets: session.pallets.map(p => ({ sku: p.sku, merv: p.merv, qty: p.qty }))
+        action:      'closeDCSession',
+        shipID:      session.id,
+        destination: session.dest    || '',
+        carrier:     session.carrier || '',
+        pallets:     palletData,
       });
-    } catch(e) {
-      toast('Inventory deduct failed: ' + e.message, true);
+      printPackingSlip();
+      toast('DC session closed — inventory updated ✓');
+    } else {
+      await postToSheet({
+        action:        'closeCampusSession',
+        transferID:    session.id,
+        destination:   session.dest          || '',
+        transportMode: session.transportMode || '',
+        pallets:       palletData,
+      });
+      const destLabel = DEST_LABELS[session.dest] || session.dest;
+      toast('Campus transfer closed → ' + destLabel + ' ✓');
     }
-    // Print packing slip reprint
-    printPackingSlip();
-  } else {
-    toast('Campus transfer closed — ' + session.id + ' → ' + session.dest);
+  } catch(e) {
+    toast('Close failed: ' + e.message, true);
+    setStatus(`<span class="stag stag-error">CLOSE FAILED</span> ${e.message} — session NOT recorded. Try again.`, 'error');
+    return; // Don't reset — let them retry
   }
 
   resetSession();
