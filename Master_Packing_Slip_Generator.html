@@ -111,6 +111,7 @@
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('label')">Packing Slip</button>
   <button class="tab-btn"        onclick="switchTab('qr')">Print Barcode Cards</button>
+  <button class="tab-btn"        onclick="switchTab('guide')">Scan Guide</button>
 </div>
 
 <div class="card">
@@ -228,7 +229,7 @@
   <div class="tab-panel" id="tab-qr">
 
     <div class="qr-section-title">Destination Key Card</div>
-    <div class="qr-desc">All 13 on-campus destination barcodes on one page. Print, laminate, and post at the origin point.</div>
+    <div class="qr-desc">All 14 on-campus destination barcodes on one page. Print, laminate, and post at the origin point.</div>
     <button class="btn-print" onclick="printDestKeyCard()">🖨&nbsp; Print Destination Key Card</button>
 
     <div class="divider"></div>
@@ -260,6 +261,18 @@
     <button class="btn-print" onclick="printTransportQR()">🖨&nbsp; Print Transport Barcode Card</button>
 
   </div><!-- /tab-qr -->
+
+
+  <!-- ══════════════════════════════════════════
+       TAB 3 — SCAN GUIDE
+  ══════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-guide">
+
+    <div class="qr-section-title">Scan Sequence Guide</div>
+    <div class="qr-desc">Printable one-page reference for scan sequences, barcode types, and inventory rules. Print and laminate for the floor.</div>
+    <button class="btn-print" onclick="printScanGuide()">🖨&nbsp; Print Scan Guide</button>
+
+  </div><!-- /tab-guide -->
 
 </div><!-- /card -->
 
@@ -313,7 +326,11 @@ function logPackingSlip(payload) {
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    b.classList.toggle('active', (i===0&&name==='label')||(i===1&&name==='qr'));
+    b.classList.toggle('active',
+      (i===0 && name==='label') ||
+      (i===1 && name==='qr')    ||
+      (i===2 && name==='guide')
+    );
   });
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
@@ -325,6 +342,10 @@ function switchTab(name) {
   document.getElementById('createdStamp').textContent =
     'Created: ' + now.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'}) +
     ' ' + now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+
+  // Route to correct tab if a hash is present in the URL
+  const hash = window.location.hash.replace('#','');
+  if (hash === 'qr' || hash === 'guide') switchTab(hash);
 })();
 
 // ── Dest address preview ──────────────────────────────────────────────────────
@@ -633,8 +654,189 @@ window.onload = function() {
   });
 }
 
+// ── PRINT SCAN GUIDE ─────────────────────────────────────────────────────────
+function printScanGuide() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'});
 
-// ── Code 128 barcode renderer (used for all print cards) ─────────────────────
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>Scan Sequence Guide — Filterbuy Talladega</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap');
+@page { size:8.5in 11in; margin:0.35in 0.4in; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Barlow',sans-serif;background:#fff;color:#0d1f13;font-size:10pt;line-height:1.4;}
+.page-header{background:#1A4A2E;padding:10px 16px 9px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.brand-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22pt;color:#fff;letter-spacing:2px;}
+.brand-tag{font-size:7pt;color:#3DAA6A;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+.doc-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14pt;color:#fff;letter-spacing:1px;text-transform:uppercase;text-align:right;}
+.doc-sub{font-size:7pt;color:#3DAA6A;letter-spacing:1.5px;text-transform:uppercase;text-align:right;}
+.stripe{height:3px;background:linear-gradient(90deg,#2E7D4F,#3DAA6A,#2E7D4F);margin-bottom:14px;}
+.section-heading{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:9pt;letter-spacing:3px;text-transform:uppercase;color:#1A4A2E;border-bottom:2px solid #1A4A2E;padding-bottom:3px;margin-bottom:10px;margin-top:14px;}
+.intro-box{background:#f4faf6;border:1.5px solid #d6ede0;border-radius:3px;padding:8px 12px;margin-bottom:14px;font-size:8.5pt;color:#1A4A2E;line-height:1.6;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.workflow{border:2px solid #1A4A2E;border-radius:4px;overflow:hidden;break-inside:avoid;}
+.wf-head{padding:7px 12px 6px;display:flex;align-items:center;gap:10px;}
+.wf-head.dc{background:#003366;}.wf-head.campus{background:#7A3B00;}
+.wf-icon{font-size:16pt;line-height:1;}
+.wf-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:14pt;color:#fff;letter-spacing:1px;line-height:1;}
+.wf-sub{font-size:7pt;color:rgba(255,255,255,0.7);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
+.wf-body{padding:10px 12px;}
+.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid #d6ede0;}
+.step:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+.step-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18pt;line-height:1;min-width:26px;text-align:center;flex-shrink:0;}
+.dc .step-num{color:#003366;}.campus .step-num{color:#7A3B00;}
+.step-action{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11pt;color:#0d1f13;letter-spacing:0.3px;line-height:1.1;margin-bottom:2px;}
+.step-detail{font-size:8.5pt;color:#456655;line-height:1.4;}
+.badge{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:8pt;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;border-radius:2px;margin-top:3px;}
+.b-open{background:#1A4A2E;color:#fff;}.b-load{background:#D6EDE0;color:#1A4A2E;}.b-close{background:#0d1f13;color:#fff;}
+.result{background:#f4faf6;border-left:3px solid #3DAA6A;padding:5px 8px;margin-top:5px;font-size:8pt;color:#1A4A2E;line-height:1.5;}
+.ref-table{width:100%;border-collapse:collapse;font-size:8.5pt;margin-bottom:14px;}
+.ref-table th{background:#1A4A2E;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:7.5pt;letter-spacing:1.5px;text-transform:uppercase;padding:5px 8px;text-align:left;}
+.ref-table td{padding:5px 8px;border-bottom:1px solid #d6ede0;vertical-align:top;}
+.ref-table tr:nth-child(even) td{background:#f4faf6;}
+.ref-table tr:last-child td{border-bottom:none;}
+.mono{font-family:'Courier New',monospace;font-size:8pt;font-weight:700;background:#edf5f0;padding:1px 4px;border-radius:2px;color:#1A4A2E;}
+.notes-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.note-card{border:1.5px solid #d6ede0;border-radius:3px;padding:8px 10px;break-inside:avoid;}
+.note-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:9pt;letter-spacing:1px;text-transform:uppercase;color:#1A4A2E;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid #d6ede0;}
+.note-card ul{padding-left:12px;font-size:8pt;color:#2E5C3F;line-height:1.6;}
+.page-footer{margin-top:14px;border-top:1px solid #d6ede0;padding-top:6px;display:flex;justify-content:space-between;align-items:center;font-size:7pt;color:#7A9A84;}
+</style>
+</head><body>
+
+<div class="page-header">
+  <div><div class="brand-name">FILTERBUY</div><div class="brand-tag">Better Air For All</div></div>
+  <div><div class="doc-title">Scan Sequence Guide</div><div class="doc-sub">Talladega · Inventory &amp; Transfer System · Internal Use</div></div>
+</div>
+<div class="stripe"></div>
+
+<div class="intro-box">
+  <strong style="font-family:'Barlow Condensed',sans-serif;font-size:10pt;letter-spacing:.5px;">HOW IT WORKS:</strong>
+  &nbsp;Every inventory movement requires a <strong>Consolidated ID</strong> — a Packing Slip barcode or a Transport vehicle barcode.
+  Scan the ID to open a session, scan each pallet to load it, then scan the destination (or re-scan the packing slip) to close and commit inventory.
+  Pallets are logged to <strong>Pope Inventory</strong> or <strong>Newberry Inventory</strong> at label print time.
+  Inventory only <em>moves</em> when a session is closed.
+</div>
+
+<div class="section-heading">Scan Workflows</div>
+<div class="two-col">
+
+  <div class="workflow dc">
+    <div class="wf-head dc">
+      <div class="wf-icon">▲</div>
+      <div><div class="wf-title">DC Shipment</div><div class="wf-sub">Talladega → Dallas · Orlando · Elgin</div></div>
+    </div>
+    <div class="wf-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div><div class="step-action">Scan Packing Slip barcode</div>
+        <div class="step-detail">Opens the DC session. Shipment details load automatically.</div>
+        <span class="badge b-open">▶ OPEN SESSION</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div><div class="step-action">Scan each Pallet barcode</div>
+        <div class="step-detail">Scan pallets one at a time as loaded. Confirm each popup.</div>
+        <span class="badge b-load">+ ADD PALLETS</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div><div class="step-action">Re-scan Packing Slip barcode</div>
+        <div class="step-detail">Closes the session. Inventory deducts. Packing slip prints.</div>
+        <span class="badge b-close">■ CLOSE &amp; PRINT</span>
+        <div class="result"><strong>Moves:</strong> Pope/Newberry → Talladega to DC Transfers</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workflow campus">
+    <div class="wf-head campus">
+      <div class="wf-icon">↔</div>
+      <div><div class="wf-title">Campus Transfer</div><div class="wf-sub">Pope · Newberry → 3K · Woodland · Retail · GB…</div></div>
+    </div>
+    <div class="wf-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div><div class="step-action">Scan Transport barcode</div>
+        <div class="step-detail">Scan the barcode inside the vehicle (BT, PUP, or FB Trailer).</div>
+        <span class="badge b-open">▶ OPEN SESSION</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div><div class="step-action">Scan each Pallet barcode</div>
+        <div class="step-detail">Scan pallets as they are loaded. Confirm each popup.</div>
+        <span class="badge b-load">+ ADD PALLETS</span></div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div><div class="step-action">Scan Destination barcode at drop-off</div>
+        <div class="step-detail">At the delivery point, scan the Destination Key Card barcode.</div>
+        <span class="badge b-close">■ CLOSE &amp; MOVE</span>
+        <div class="result"><strong>Moves:</strong> Pope/Newberry → destination location tab</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section-heading">Barcode Quick Reference</div>
+<table class="ref-table">
+  <thead><tr><th style="width:22%">Barcode Type</th><th style="width:30%">Format / Example</th><th style="width:22%">Used In</th><th>What It Does</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Master Pallet Label</strong></td><td><span class="mono">FB-061226-DAL-042</span></td><td>Master Pallet Label</td><td>Identifies a single pallet. Logged to Pallet Log + source inventory at print time.</td></tr>
+    <tr><td><strong>Packing Slip</strong></td><td><span class="mono">061226-XX</span> (6-digit date)</td><td>Master Packing Slip Generator</td><td>Opens and closes a DC shipment session.</td></tr>
+    <tr><td><strong>Box Truck</strong></td><td><span class="mono">BT-341</span> &nbsp; <span class="mono">BT-049</span></td><td>Laminated card in vehicle</td><td>Opens a campus transfer session.</td></tr>
+    <tr><td><strong>PUP Trailer</strong></td><td><span class="mono">PUP-32</span> &nbsp; <span class="mono">PUP-14</span> &nbsp; <span class="mono">PUP-58</span></td><td>Laminated card in vehicle</td><td>Opens a campus transfer session.</td></tr>
+    <tr><td><strong>FB Trailer</strong></td><td><span class="mono">FB-001</span> through <span class="mono">FB-005</span></td><td>Laminated card in vehicle</td><td>Opens a campus transfer session.</td></tr>
+    <tr><td><strong>Destination Key Card</strong></td><td><span class="mono">3K</span> &nbsp; <span class="mono">WOODLAND</span> &nbsp; <span class="mono">GB1</span> etc.</td><td>Laminated card at location</td><td>Closes a campus transfer and commits inventory to that location.</td></tr>
+  </tbody>
+</table>
+
+<div class="section-heading">Rules &amp; Important Notes</div>
+<div class="notes-grid">
+  <div class="note-card">
+    <div class="note-title">⚠ Order Matters</div>
+    <ul>
+      <li>Always OPEN before scanning pallets</li>
+      <li>Always CLOSE before leaving drop-off</li>
+      <li>Inventory does <strong>not move</strong> until closed</li>
+      <li>Do not close an empty session</li>
+    </ul>
+  </div>
+  <div class="note-card">
+    <div class="note-title">🔄 Duplicates &amp; Errors</div>
+    <ul>
+      <li>Same pallet twice = warning, do not confirm</li>
+      <li>Pallet not found = not yet printed from MPL</li>
+      <li>If close fails, stay in session and retry</li>
+      <li>Max 26 pallets per DC session</li>
+    </ul>
+  </div>
+  <div class="note-card">
+    <div class="note-title">📋 Adding Inventory</div>
+    <ul>
+      <li>Inventory adds when MPL is <strong>printed &amp; logged</strong></li>
+      <li>Pope line → Pope Inventory tab</li>
+      <li>Newberry line → Newberry Inventory tab</li>
+      <li>Destination on label is visual only — does not move inventory at print</li>
+    </ul>
+  </div>
+</div>
+
+<div class="page-footer">
+  <span>FILTERBUY TALLADEGA · INTERCOMPANY DISTRIBUTION · FOR INTERNAL USE ONLY</span>
+  <span>Printed: ${dateStr} · Scan Interface · Master Pallet Label · Master Packing Slip Generator</span>
+</div>
+
+<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<\/script>
+</body></html>`;
+
+  const w = window.open('','_blank','width=920,height=780');
+  w.document.open(); w.document.write(html); w.document.close(); w.focus();
+}
+
+
 const C128 = (function(){
   const V={' ':0,'!':1,'"':2,'#':3,'$':4,'%':5,'&':6,"'":7,'(':8,')':9,'*':10,'+':11,',':12,'-':13,'.':14,'/':15,'0':16,'1':17,'2':18,'3':19,'4':20,'5':21,'6':22,'7':23,'8':24,'9':25,':':26,';':27,'<':28,'=':29,'>':30,'?':31,'@':32,'A':33,'B':34,'C':35,'D':36,'E':37,'F':38,'G':39,'H':40,'I':41,'J':42,'K':43,'L':44,'M':45,'N':46,'O':47,'P':48,'Q':49,'R':50,'S':51,'T':52,'U':53,'V':54,'W':55,'X':56,'Y':57,'Z':58,'[':59,'\\':60,']':61,'^':62,'_':63,'`':64,'a':65,'b':66,'c':67,'d':68,'e':69,'f':70,'g':71,'h':72,'i':73,'j':74,'k':75,'l':76,'m':77,'n':78,'o':79,'p':80,'q':81,'r':82,'s':83,'t':84,'u':85,'v':86,'w':87,'x':88,'y':89,'z':90,'{':91,'|':92,'}':93,'~':94};
   const P=['11011001100','11001101100','11001100110','10010011000','10010001100','10001001100','10011001000','10011000100','10001100100','11001001000','11001000100','11000100100','10110011100','10011011100','10011001110','10111001100','10011101100','10011100110','11001110010','11001011100','11001001110','11011100100','11001110100','11101101110','11101001100','11100101100','11100100110','11101100100','11100110100','11100110010','11011011000','11011000110','11000110110','10100011000','10001011000','10001000110','10110001000','10001101000','10001100010','11010001000','11000101000','11000100010','10110111000','10110001110','10001101110','10111011000','10111000110','10001110110','11101110110','11010001110','11000101110','11011101000','11011100010','11011101110','11101011000','11101000110','11100010110','11101101000','11101100010','11100011010','11101111010','11001000010','11110001010','10100110000','10100001100','10010110000','10010000110','10000101100','10000100110','10110010000','10110000100','10011010000','10011000010','10000110100','10000110010','11000010010','11001010000','11110111010','11000010100','10001111010','10100111100','10010111100','11110100010','11110010010','11110010100','10111100010','11110111100','10000010110','00000000000'];
