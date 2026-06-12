@@ -282,31 +282,31 @@ const SHIP_FROM_ADDR = {
 const SHEET_ID  = '1MorhnKXzqTUGix-7nVITu2CfPscOHpp92m-VIvQIUvM';
 const WEB_APP_URL = 'https://script.google.com/a/macros/filterbuy.com/s/AKfycbzZv8dRDWcKx8hVtF0HNLR8R32PgP6YDIt6fW_MneEbcVEm7UrYyUSunO49CBgMmk4e6g/exec';
 
-function logDCTransfer(payload) {
+function logPackingSlip(payload) {
   const statusEl = document.getElementById('logStatus');
   statusEl.style.display = '';
   statusEl.style.background = '#f0f9f4';
   statusEl.style.color = '#2E7D4F';
   statusEl.style.border = '1px solid #b4d4c0';
-  statusEl.textContent = '⏳ Logging to sheet…';
+  statusEl.textContent = '⏳ Logging packing slip to sheet…';
 
   fetch(WEB_APP_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'logPackingSlip', sheetId: SHEET_ID, ...payload })
+    body: JSON.stringify({ action: 'logPackingSlip', ...payload })
   })
   .then(() => {
     statusEl.style.background = '#f0f9f4';
     statusEl.style.color = '#1A4A2E';
     statusEl.style.border = '1px solid #3DAA6A';
-    statusEl.textContent = '✓ Logged to Packing Slips tab.';
-    setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+    statusEl.textContent = '✓ Packing slip logged — Scan Interface can now look up this shipment.';
+    setTimeout(() => { statusEl.style.display = 'none'; }, 6000);
   })
   .catch(() => {
     statusEl.style.background = '#fff5f5';
     statusEl.style.color = '#b00';
     statusEl.style.border = '1px solid #f5c0c0';
-    statusEl.textContent = '⚠ Sheet log failed — packing slip still printed. Check connection.';
+    statusEl.textContent = '⚠ Sheet log failed — packing slip still printed. Scan Interface lookup will not work for this slip.';
   });
 }
 
@@ -618,9 +618,8 @@ window.onload = function() {
   const w = window.open('','_blank','width=940,height=780');
   w.document.open(); w.document.write(html); w.document.close(); w.focus();
 
-  // ── Log to Talladega to DC Transfers tab ──────────────────────────────────
-  logDCTransfer({
-    timestamp:   new Date().toISOString(),
+  // ── Log packing slip header to sheet (enables Scan Interface lookup) ─────────
+  logPackingSlip({
     shipperID:   sid,
     shipTo:      toKey,
     trailerNum:  trailerNum,
@@ -685,6 +684,7 @@ const DESTINATIONS = [
   {id:'RETAIL3',  label:'Retail 3'      },
   {id:'GB1',      label:'GB 1'          },
   {id:'GB2',      label:'GB 2'          },
+  {id:'GB3',      label:'GB 3'          },
   {id:'NEWBRY',   label:'Newberry'      },
   {id:'TMS',      label:'TMS'           },
   {id:'PIGWHS',   label:'Pig Warehouse' },
