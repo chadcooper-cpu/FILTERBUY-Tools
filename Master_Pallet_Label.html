@@ -414,12 +414,22 @@
 
   .lbl-qty-row {
     margin-top: 4px; background: #fff; border: 3px solid #000;
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .lbl-qty-top {
     padding: 5px 10px;
-    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: space-between;
   }
   .lbl-qty-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #333; }
   .lbl-qty-val   { font-weight: 800; font-size: 54px; color: #000; line-height: 1; letter-spacing: 1px; }
   .lbl-qty-unit  { font-size: 11px; color: #333; font-weight: 700; letter-spacing: 1px; text-align: right; line-height: 1.4; text-transform: uppercase; }
+
+  .lbl-plan-load-inner {
+    border-top: 2px solid #000;
+    padding: 4px 10px 8px;
+  }
+  .lbl-plan-load-label { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #888; }
+  .lbl-plan-load-val   { font-weight: 800; font-size: 54px; color: #000; letter-spacing: 1px; line-height: 1; white-space: nowrap; display: block; }
 
   .lbl-footer {
     background: #fff; border-top: 2px solid #000;
@@ -593,7 +603,10 @@
         </optgroup>
       </select>
     </div>
-    <div></div>
+    <div>
+      <label>Plan Load Date <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--gray-400);font-size:10px;">(optional)</span></label>
+      <input type="date" id="plan-load-date">
+    </div>
 
     <div class="section-label">Print Options</div>
 
@@ -694,16 +707,19 @@
     const savedDest  = localStorage.getItem('mpl_dest');
     const savedLine  = localStorage.getItem('mpl_line');
     const savedMfgLoc = localStorage.getItem('mpl_mfg_location');
-    if (savedShift)  document.getElementById('shift').value        = savedShift;
-    if (savedDest)   document.getElementById('dest').value         = savedDest;
-    if (savedLine)   document.getElementById('line').value         = savedLine;
-    if (savedMfgLoc) document.getElementById('mfg-location').value = savedMfgLoc;
+    const savedPlanLoadDate = localStorage.getItem('mpl_plan_load_date');
+    if (savedShift)       document.getElementById('shift').value          = savedShift;
+    if (savedDest)        document.getElementById('dest').value           = savedDest;
+    if (savedLine)        document.getElementById('line').value           = savedLine;
+    if (savedMfgLoc)      document.getElementById('mfg-location').value   = savedMfgLoc;
+    if (savedPlanLoadDate) document.getElementById('plan-load-date').value = savedPlanLoadDate;
 
     // Save on change
     document.getElementById('shift').addEventListener('change', function(){ localStorage.setItem('mpl_shift', this.value); });
     document.getElementById('dest').addEventListener('change',  function(){ localStorage.setItem('mpl_dest',  this.value); });
     document.getElementById('line').addEventListener('change',  function(){ localStorage.setItem('mpl_line',  this.value); });
     document.getElementById('mfg-location').addEventListener('change', function(){ localStorage.setItem('mpl_mfg_location', this.value); });
+    document.getElementById('plan-load-date').addEventListener('change', function(){ localStorage.setItem('mpl_plan_load_date', this.value); });
 
     addSkuRow();
   });
@@ -718,6 +734,18 @@
     if (!isoDate) return '';
     const [y, m, d] = isoDate.split('-');
     return `${m}${d}${y.slice(2)}`; // MMDDYY
+  }
+
+  // Format plan load date as "MON -- 06-15-26"
+  function fmtPlanLoadDate(isoDate) {
+    if (!isoDate) return '';
+    const [y, m, d] = isoDate.split('-');
+    const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    // Parse as local date (avoid UTC shift by constructing with local parts)
+    const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    const dow = days[dt.getDay()];
+    const yy = y.slice(2);
+    return `${dow}  ${m}-${d}-${yy}`;
   }
 
   let _labelIdx = 0;
@@ -867,6 +895,7 @@
 
     const inspectedBy = document.getElementById('inspected-by').value.trim();
     const mfgLocation  = document.getElementById('mfg-location').value;
+    const planLoadFormatted = data.planLoadDate ? fmtPlanLoadDate(data.planLoadDate) : '';
 
     const html = `
 <div class="label">
@@ -910,11 +939,18 @@
     ${heroHtml}
 
     <div class="lbl-qty-row">
-      <div>
-        <div class="lbl-qty-label">${qtyLabel}</div>
-        <div class="lbl-qty-val">${parseInt(displayQty).toLocaleString()}</div>
+      <div class="lbl-qty-top">
+        <div>
+          <div class="lbl-qty-label">${qtyLabel}</div>
+          <div class="lbl-qty-val">${parseInt(displayQty).toLocaleString()}</div>
+        </div>
+        <div class="lbl-qty-unit">FILTERS<br>PER PALLET</div>
       </div>
-      <div class="lbl-qty-unit">FILTERS<br>PER PALLET</div>
+      ${planLoadFormatted ? `
+      <div class="lbl-plan-load-inner">
+        <div class="lbl-plan-load-label">Plan Load Date</div>
+        <div class="lbl-plan-load-val">${planLoadFormatted}</div>
+      </div>` : ''}
     </div>
   </div>
 
@@ -1033,7 +1069,18 @@
     }
   }
 
-  // ── SKU row management ───────────────────────────────────────────
+  // ── Fit plan load date text to container width ───────────────────
+  function fitPlanLoadDates(container) {
+    container.querySelectorAll('.lbl-plan-load-val').forEach(el => {
+      el.style.fontSize = '54px';
+      const parent = el.parentElement;
+      const available = parent.clientWidth - 20; // 10px padding each side
+      if (el.scrollWidth > available) {
+        const scale = available / el.scrollWidth;
+        el.style.fontSize = Math.floor(54 * scale) + 'px';
+      }
+    });
+  }
   const MAX_SKU_ROWS = 6;
   let _skuRowCount = 0;
 
@@ -1107,9 +1154,10 @@
   function getData() {
     const skuLines = getSkuLines();
     return {
-      mfgDate:  document.getElementById('mfg-date').value,
-      shift:    document.getElementById('shift').value,
-      line:     document.getElementById('line').value || '1',
+      mfgDate:      document.getElementById('mfg-date').value,
+      shift:        document.getElementById('shift').value,
+      line:         document.getElementById('line').value || '1',
+      planLoadDate: document.getElementById('plan-load-date').value,
       skuLines,
       sku:      skuLines.map(s => s.sku).join(' / '),
       merv:     skuLines.length === 1 ? skuLines[0].merv : 'MIXED',
@@ -1136,6 +1184,7 @@
       }
     }
     redrawAllBarcodes(wrap);
+    fitPlanLoadDates(wrap);
 
     const totalLabels = data.copies * (data.isMixed ? 1 + data.skuLines.length : 1);
     if (data.copies > 2) {
@@ -1235,10 +1284,14 @@
       .lbl-field:nth-last-child(-n+2) { border-bottom:none; }
       .lbl-field-val { font-weight:700; font-size:19px; line-height:1.15; color:#000; }
       .lbl-field-val.large { font-size:22px; }
-      .lbl-qty-row { margin-top:4px; background:#fff; border:3px solid #000; padding:5px 10px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+      .lbl-qty-row { margin-top:4px; background:#fff; border:3px solid #000; display:flex; flex-direction:column; flex-shrink:0; }
+      .lbl-qty-top { padding:5px 10px; display:flex; align-items:center; justify-content:space-between; }
       .lbl-qty-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#333; }
       .lbl-qty-val { font-weight:800; font-size:54px; color:#000; line-height:1; letter-spacing:1px; }
       .lbl-qty-unit { font-size:11px; color:#333; font-weight:700; letter-spacing:1px; text-align:right; line-height:1.4; text-transform:uppercase; }
+      .lbl-plan-load-inner { border-top:2px solid #000; padding:4px 10px 8px; }
+      .lbl-plan-load-label { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#888; }
+      .lbl-plan-load-val { font-weight:800; font-size:54px; color:#000; letter-spacing:1px; line-height:1; white-space:nowrap; display:block; }
       .lbl-barcode { border-top:2px solid #000; padding:5px 10px 3px; background:#fff; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:2px; }
       .lbl-barcode canvas { display:block; image-rendering:pixelated; }
       .lbl-barcode-text { font-family:'Barlow Condensed',sans-serif; font-size:9px; font-weight:700; letter-spacing:2px; color:#000; text-transform:uppercase; }
@@ -1285,6 +1338,15 @@ window.onload=function(){
     const cv=bc.querySelector('canvas');
     const tx=bc.querySelector('.lbl-barcode-text');
     if(cv&&tx)drawCode128(cv,tx.textContent.trim());
+  });
+  document.querySelectorAll('.lbl-plan-load-val').forEach(el=>{
+    el.style.fontSize='54px';
+    const parent=el.parentElement;
+    const available=parent.clientWidth-20;
+    if(el.scrollWidth>available){
+      const scale=available/el.scrollWidth;
+      el.style.fontSize=Math.floor(54*scale)+'px';
+    }
   });
   setTimeout(()=>{ window.print(); },400);
 };
