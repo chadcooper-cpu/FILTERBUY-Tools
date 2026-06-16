@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pallet Distribution Sheet — Filterbuy Tools</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --fb-green:  #008533;
+  --fb-black:  #111111;
+  --fb-gray:   #4A4A4A;
+  --fb-rule:   #D0D0D0;
+  --fb-bg:     #F6F6F6;
+  --fb-white:  #FFFFFF;
+  --fb-red:    #C0392B;
+  --fb-amber:  #7D4E00;
+  --dallas:    #4A235A;
+  --orlando:   #784212;
+  --elgin:     #1A3A5C;
+}
+
+body { font-family:'Barlow',sans-serif; background:var(--fb-bg); color:var(--fb-black); min-height:100vh; }
+
+/* ── Header ── */
+header {
+  background:var(--fb-green); padding:13px 28px;
+  display:flex; align-items:center; gap:16px;
+}
+header .logo-text {
+  font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px;
+  color:#fff; letter-spacing:1px; text-transform:uppercase;
+}
+header .page-title {
+  font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:600;
+  color:rgba(255,255,255,.75); letter-spacing:2px; text-transform:uppercase; margin-left:auto;
+}
+
+/* ── Layout ── */
+.app { display:grid; grid-template-columns:390px 1fr; min-height:calc(100vh - 50px); }
+
+/* ── Sidebar ── */
+.sidebar {
+  background:var(--fb-white); border-right:2px solid var(--fb-rule);
+  padding:22px 20px; overflow-y:auto;
+}
+.sidebar h2 {
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px;
+  letter-spacing:2px; text-transform:uppercase; color:var(--fb-gray);
+  margin-bottom:14px; padding-bottom:7px; border-bottom:1px solid var(--fb-rule);
+}
+.field { margin-bottom:13px; }
+.field label {
+  display:block; font-size:11px; font-weight:600; letter-spacing:1px;
+  text-transform:uppercase; color:var(--fb-gray); margin-bottom:4px;
+}
+.field input,.field select,.field textarea {
+  width:100%; padding:9px 11px; border:1.5px solid var(--fb-rule); border-radius:4px;
+  font-family:'Barlow',sans-serif; font-size:14px; color:var(--fb-black);
+  background:var(--fb-white); transition:border-color .15s; appearance:none;
+}
+.field textarea { resize:vertical; min-height:70px; font-size:13px; line-height:1.5; }
+.field input:focus,.field select:focus,.field textarea:focus {
+  outline:none; border-color:var(--fb-green);
+}
+
+/* Mode toggle */
+.mode-toggle {
+  display:grid; grid-template-columns:1fr 1fr; border:1.5px solid var(--fb-rule);
+  border-radius:5px; overflow:hidden; margin-bottom:14px;
+}
+.mode-toggle button {
+  padding:8px 6px; border:none; cursor:pointer; font-family:'Barlow Condensed',sans-serif;
+  font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  background:var(--fb-bg); color:var(--fb-gray); transition:all .15s;
+}
+.mode-toggle button.active { background:var(--fb-green); color:#fff; }
+
+/* SKU rows (AFB mode) */
+.sku-row {
+  display:grid; grid-template-columns:1fr 80px 64px 26px;
+  gap:5px; align-items:center; margin-bottom:7px;
+}
+.sku-row input {
+  padding:7px 7px; border:1.5px solid var(--fb-rule); border-radius:4px;
+  font-family:'Barlow',sans-serif; font-size:13px; background:var(--fb-white); color:var(--fb-black);
+}
+.sku-row input:focus { outline:none; border-color:var(--fb-green); }
+
+.sku-col-labels {
+  display:grid; grid-template-columns:1fr 80px 64px 26px;
+  gap:5px; margin-bottom:4px;
+}
+.sku-col-labels span {
+  font-size:10px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+  color:var(--fb-gray); padding-left:2px;
+}
+
+/* Freeform rows */
+.ff-row {
+  display:grid; grid-template-columns:1fr 1fr 64px 26px;
+  gap:5px; align-items:center; margin-bottom:7px;
+}
+.ff-row input {
+  padding:7px 7px; border:1.5px solid var(--fb-rule); border-radius:4px;
+  font-family:'Barlow',sans-serif; font-size:13px; background:var(--fb-white); color:var(--fb-black);
+}
+.ff-row input:focus { outline:none; border-color:var(--fb-green); }
+.ff-col-labels {
+  display:grid; grid-template-columns:1fr 1fr 64px 26px;
+  gap:5px; margin-bottom:4px;
+}
+.ff-col-labels span {
+  font-size:10px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+  color:var(--fb-gray); padding-left:2px;
+}
+
+.btn-remove {
+  width:26px; height:26px; background:none; border:1.5px solid var(--fb-rule);
+  border-radius:4px; cursor:pointer; font-size:15px; color:var(--fb-gray);
+  display:flex; align-items:center; justify-content:center; transition:all .15s;
+}
+.btn-remove:hover { background:#FEE; border-color:var(--fb-red); color:var(--fb-red); }
+
+.btn-add {
+  display:flex; align-items:center; gap:5px; background:none;
+  border:1.5px dashed var(--fb-rule); border-radius:4px; padding:6px 10px;
+  cursor:pointer; font-family:'Barlow',sans-serif; font-size:12px; color:var(--fb-gray);
+  width:100%; margin-top:3px; transition:all .15s;
+}
+.btn-add:hover { border-color:var(--fb-green); color:var(--fb-green); }
+
+/* Pallet counter */
+.pallet-counter {
+  background:var(--fb-bg); border:1.5px solid var(--fb-rule); border-radius:6px;
+  padding:11px 13px; margin:14px 0; display:flex; align-items:center; justify-content:space-between;
+}
+.pallet-counter .pc-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--fb-gray); }
+.pallet-counter .pc-count { font-family:'Barlow Condensed',sans-serif; font-size:28px; font-weight:900; color:var(--fb-green); }
+.pallet-counter .pc-sub { font-size:12px; color:var(--fb-gray); font-weight:500; }
+
+/* Buttons */
+.btn-primary {
+  width:100%; background:var(--fb-green); color:#fff; border:none; border-radius:5px;
+  padding:12px; font-family:'Barlow Condensed',sans-serif; font-size:15px; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase; cursor:pointer; margin-top:5px; transition:background .15s;
+}
+.btn-primary:hover { background:#006828; }
+.btn-secondary {
+  width:100%; background:none; color:var(--fb-green); border:2px solid var(--fb-green);
+  border-radius:5px; padding:10px; font-family:'Barlow Condensed',sans-serif; font-size:14px;
+  font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer; margin-top:7px; transition:all .15s;
+}
+.btn-secondary:hover { background:var(--fb-green); color:#fff; }
+.btn-future {
+  width:100%; background:none; color:var(--fb-gray); border:2px dashed var(--fb-rule);
+  border-radius:5px; padding:10px; font-family:'Barlow Condensed',sans-serif; font-size:13px;
+  font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:not-allowed; margin-top:7px;
+  opacity:.7;
+}
+.btn-row { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:7px; }
+
+/* Status */
+.status-bar {
+  padding:9px 13px; border-radius:5px; font-size:12px; font-weight:500;
+  margin-top:9px; display:none;
+}
+.status-bar.info    { background:#E8F5E9; color:#1B5E20; border:1px solid #A5D6A7; display:block; }
+.status-bar.error   { background:#FFEBEE; color:#B71C1C; border:1px solid #FFCDD2; display:block; }
+.status-bar.loading { background:#E3F2FD; color:#0D47A1; border:1px solid #90CAF9; display:block; }
+
+/* ── Preview ── */
+.preview-area { padding:24px 28px; overflow-y:auto; background:#E0E0E0; }
+.preview-area > h2 {
+  font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; color:var(--fb-gray); margin-bottom:18px;
+}
+
+/* ── Label Sheet ── */
+.label-sheet {
+  background:var(--fb-white); width:8.5in; min-height:11in;
+  margin:0 auto; box-shadow:0 4px 24px rgba(0,0,0,.18);
+  padding:0.45in 0.5in 0.5in; position:relative;
+  font-family:'Barlow Condensed',sans-serif;
+  display:flex; flex-direction:column;
+}
+
+/* DC color strip — top accent */
+.dc-strip { position:absolute; top:0; left:0; right:0; height:8px; }
+.dc-strip.dallas  { background:var(--dallas); }
+.dc-strip.orlando { background:var(--orlando); }
+.dc-strip.elgin   { background:var(--elgin); }
+
+/* Label header */
+.lbl-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  border-bottom:3px solid var(--fb-black); padding-bottom:13px; margin-bottom:16px;
+  margin-top:6px;
+}
+.lbl-logo {
+  background:var(--fb-green); color:#fff; font-family:'Barlow Condensed',sans-serif;
+  font-weight:900; font-size:17px; padding:5px 13px; letter-spacing:1px; text-transform:uppercase;
+}
+.lbl-logo span { display:block; font-size:8px; font-weight:400; letter-spacing:2px; opacity:.85; margin-top:1px; }
+.lbl-badge { text-align:right; }
+.lbl-badge .pnum {
+  font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:60px; line-height:1; color:var(--fb-black);
+}
+.lbl-badge .pof { font-size:12px; color:var(--fb-gray); font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+
+.lbl-dest {
+  font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:72px;
+  line-height:1; text-transform:uppercase; letter-spacing:-0.5px;
+  text-align:center; width:100%; margin-bottom:4px;
+}
+.lbl-dest.dallas  { color:var(--dallas); }
+.lbl-dest.orlando { color:var(--orlando); }
+.lbl-dest.elgin   { color:var(--elgin); }
+
+.lbl-date {
+  font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:72px;
+  line-height:1; color:var(--fb-black); text-align:center; width:100%; margin-bottom:12px;
+}
+
+/* Sheet type badge */
+.lbl-type-badge {
+  display:block; background:var(--fb-bg); border:1px solid var(--fb-rule);
+  font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+  color:var(--fb-gray); padding:3px 9px; border-radius:3px; margin-bottom:18px;
+  text-align:center;
+}
+.lbl-type-badge.freeform { background:#FFF8E1; border-color:#FFD54F; color:var(--fb-amber); }
+
+hr.lbl-rule { border:none; border-top:1.5px solid var(--fb-rule); margin:14px 0; }
+
+/* Notes / freeform */
+.lbl-notes {
+  font-family:'Barlow',sans-serif; font-size:13px; color:var(--fb-gray);
+  margin-bottom:10px; white-space:pre-wrap; line-height:1.6;
+}
+
+.lbl-table { width:100%; border-collapse:collapse; }
+.lbl-table th {
+  font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+  color:var(--fb-gray); border-bottom:2px solid var(--fb-black); padding:6px 8px; text-align:left;
+}
+.lbl-table th:last-child { text-align:right; }
+.lbl-table td { padding:12px 8px; border-bottom:1px solid var(--fb-rule); }
+.lbl-table td.t-sku  { font-size:32px; font-weight:700; font-family:'Barlow Condensed',sans-serif; }
+.lbl-table td.t-desc { font-size:18px; font-weight:500; font-family:'Barlow',sans-serif; color:var(--fb-gray); }
+.lbl-table td.t-merv { font-size:30px; font-weight:700; font-family:'Barlow Condensed',sans-serif; }
+.lbl-table td.t-qty  { font-size:42px; font-weight:900; font-family:'Barlow Condensed',sans-serif; text-align:right; }
+
+/* Spacer pushes footer to bottom */
+.lbl-spacer { flex:1; }
+
+/* Barcode section */
+.lbl-barcode-wrap {
+  margin-top:14px; padding-top:12px; border-top:1.5px solid var(--fb-rule);
+  text-align:center;
+}
+.lbl-barcode-wrap svg { max-width:100%; height:56px; }
+.lbl-barcode-id {
+  font-size:9px; letter-spacing:2px; font-weight:600; color:var(--fb-gray);
+  text-transform:uppercase; margin-top:3px;
+}
+
+/* Inventory warning */
+.lbl-inv-warning {
+  margin-top:12px; padding:7px 12px;
+  background:#FFF8E1; border:1px solid #FFD54F; border-radius:3px;
+  font-family:'Barlow',sans-serif; font-size:10px; font-weight:600;
+  color:var(--fb-amber); letter-spacing:0.3px; text-align:center;
+  text-transform:uppercase; letter-spacing:1px;
+}
+
+/* Footer */
+.lbl-footer {
+  margin-top:8px; display:flex; align-items:center; justify-content:space-between;
+  border-top:1px solid var(--fb-rule); padding-top:7px;
+}
+.lbl-footer .ft-left { font-size:9px; color:var(--fb-gray); font-weight:500; }
+.lbl-footer .ft-right { font-size:9px; color:#bbb; }
+
+/* ── Print ── */
+@media print {
+  body { background:white; }
+  header,.sidebar,.preview-area>h2 { display:none !important; }
+  .app { display:block; }
+  .preview-area { padding:0; background:white; }
+  .label-sheet { box-shadow:none; margin:0; width:100%; page-break-after:always; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-text">Filterbuy Tools</div>
+  <div class="page-title">Pallet Distribution Sheet</div>
+</header>
+
+<div class="app">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+
+  <h2>Shipment Info</h2>
+
+  <div class="field">
+    <label>Destination:</label>
+    <select id="dest" onchange="updatePreview(); updateDCCounter();">
+      <option value="">— Select Destination —</option>
+      <optgroup label="Distribution Centers">
+        <option value="DALLAS DC">Dallas DC</option>
+        <option value="ORLANDO DC">Orlando DC</option>
+        <option value="ELGIN DC">Elgin DC</option>
+      </optgroup>
+      <optgroup label="On-Campus">
+        <option value="3K WAREHOUSE">3K Warehouse</option>
+        <option value="POPE">Pope</option>
+        <option value="RETAIL">Retail</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Load Date</label>
+    <input type="date" id="loadDate" onchange="updatePreview()" />
+  </div>
+
+  <div class="field">
+    <label>Notes (optional)</label>
+    <textarea id="notes" placeholder="BOL #, trailer #, special instructions…" oninput="updatePreview()"></textarea>
+  </div>
+
+  <!-- Pallet counter -->
+  <div class="pallet-counter">
+    <div>
+      <div class="pc-label">Pallet Number</div>
+      <div class="pc-sub" id="dcPalletStatus">0 logged this DC</div>
+    </div>
+    <div style="text-align:right">
+      <div class="pc-count" id="palletNumDisplay">—</div>
+      <div class="pc-sub">of 26</div>
+    </div>
+  </div>
+
+  <!-- Content mode toggle -->
+  <h2>Pallet Contents</h2>
+
+  <div class="mode-toggle">
+    <button id="modeAFB" class="active" onclick="setMode('afb')">AFB Filters</button>
+    <button id="modeFree" onclick="setMode('free')">Freeform / Parts</button>
+  </div>
+
+  <!-- AFB SKU section -->
+  <div id="afbSection">
+    <div class="sku-col-labels">
+      <span>Size (e.g. 20x20x1)</span>
+      <span>MERV</span>
+      <span>Qty</span>
+      <span></span>
+    </div>
+    <div id="skuRows"></div>
+    <button class="btn-add" onclick="addSkuRow()">+ Add Filter SKU</button>
+  </div>
+
+  <!-- Freeform section -->
+  <div id="freeSection" style="display:none">
+    <div class="ff-col-labels">
+      <span>Part / Item #</span>
+      <span>Description</span>
+      <span>Qty</span>
+      <span></span>
+    </div>
+    <div id="ffRows"></div>
+    <button class="btn-add" onclick="addFfRow()">+ Add Item</button>
+  </div>
+
+  <!-- Actions -->
+  <div style="margin-top:20px; border-top:1px solid var(--fb-rule); padding-top:16px;">
+    <h2>Actions</h2>
+    <button class="btn-primary" onclick="generateLabel()">Generate Sheet</button>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="printLabel()">Print Sheet</button>
+      <button class="btn-secondary" onclick="logToSheets()">Log to Drive</button>
+    </div>
+    <!-- Truck manifest — placeholder for future integration -->
+    <button class="btn-future" title="Truck Manifest printing coming soon" onclick="showStatus('Truck Manifest is planned for a future update.','info')">
+      🚛 Truck Manifest (Coming Soon)
+    </button>
+  </div>
+
+  <div id="statusBar" class="status-bar"></div>
+
+</aside>
+
+<!-- ── PREVIEW ── -->
+<main class="preview-area">
+  <h2>Sheet Preview</h2>
+
+  <div class="label-sheet" id="labelSheet">
+    <div class="dc-strip" id="dcStrip"></div>
+
+    <!-- Header -->
+    <div class="lbl-header">
+      <div>
+        <div class="lbl-logo">FILTERBUY<span>Better Air For All</span></div>
+      </div>
+      <div class="lbl-badge">
+        <div class="pnum" id="lblPalletNum">—</div>
+        <div class="pof">of 26</div>
+      </div>
+    </div>
+
+    <div class="lbl-dest" id="lblDest">DESTINATION DC</div>
+    <div class="lbl-date" id="lblDate">Load Date</div>
+    <div class="lbl-type-badge" id="lblTypeBadge">AFB Filter Shipment</div>
+
+    <!-- Notes -->
+    <div class="lbl-notes" id="lblNotes" style="display:none"></div>
+
+    <hr class="lbl-rule">
+
+    <!-- SKU / item table -->
+    <table class="lbl-table">
+      <thead id="lblTableHead">
+        <tr>
+          <th>SKU</th>
+          <th>MERV</th>
+          <th style="text-align:right">Qty</th>
+        </tr>
+      </thead>
+      <tbody id="lblSkuBody">
+        <tr>
+          <td class="t-sku" colspan="3" style="color:#bbb;font-size:15px;font-weight:400;">
+            Fill in the form to preview your sheet
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="lbl-spacer"></div>
+
+    <!-- Barcode -->
+    <div class="lbl-barcode-wrap" id="barcodeWrap" style="display:none">
+      <svg id="barcodeEl"></svg>
+      <div class="lbl-barcode-id" id="barcodeId"></div>
+    </div>
+
+    <!-- Inventory warning -->
+    <div class="lbl-inv-warning">
+      ⚠ This sheet does not affect inventory counts — for tracking purposes only
+    </div>
+
+    <!-- Footer -->
+    <div class="lbl-footer">
+      <div class="ft-left">Filterbuy · Talladega, AL · ICST Distribution</div>
+      <div class="ft-right" id="lblTimestamp"></div>
+    </div>
+
+  </div>
+</main>
+
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const FOLDER_ID = '1sARdFg9zj80NkSnKfn97Kj5e4-Q93b9-';
+const DC_SHEET_MAP = { 'DALLAS DC':'Dallas DC', 'ORLANDO DC':'Orlando DC', 'ELGIN DC':'Elgin DC' };
+const DC_CLASS     = {
+  'DALLAS DC':'dallas', 'ORLANDO DC':'orlando', 'ELGIN DC':'elgin',
+  '3K WAREHOUSE':'', 'POPE':'', 'RETAIL':''
+};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let dcPalletCounts = { 'DALLAS DC':0, 'ORLANDO DC':0, 'ELGIN DC':0, '3K WAREHOUSE':0, 'POPE':0, 'RETAIL':0 };
+let currentMode    = 'afb';   // 'afb' | 'free'
+let generatedId    = null;    // barcode ID set at generate time
+
+// ── Mode toggle ────────────────────────────────────────────────────────────
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('afbSection').style.display  = mode === 'afb'  ? '' : 'none';
+  document.getElementById('freeSection').style.display = mode === 'free' ? '' : 'none';
+  document.getElementById('modeAFB').classList.toggle('active',  mode === 'afb');
+  document.getElementById('modeFree').classList.toggle('active', mode === 'free');
+  updatePreview();
+}
+
+// ── AFB SKU rows ───────────────────────────────────────────────────────────
+function addSkuRow(sku='', merv='', qty='') {
+  const d = document.createElement('div');
+  d.className = 'sku-row';
+  d.innerHTML = `
+    <input type="text" placeholder="e.g. 20x20x1" value="${sku}" oninput="updatePreview()"/>
+    <input type="text" placeholder="e.g. 8, 11, OE" value="${merv}" oninput="updatePreview()"/>
+    <input type="number" placeholder="Qty" min="1" value="${qty}" oninput="updatePreview()"/>
+    <button class="btn-remove" onclick="this.parentElement.remove();updatePreview()">×</button>
+  `;
+  document.getElementById('skuRows').appendChild(d);
+  updatePreview();
+}
+
+// ── Freeform rows ──────────────────────────────────────────────────────────
+function addFfRow(part='', desc='', qty='') {
+  const d = document.createElement('div');
+  d.className = 'ff-row';
+  d.innerHTML = `
+    <input type="text" placeholder="Part / item #" value="${part}" oninput="updatePreview()"/>
+    <input type="text" placeholder="Description" value="${desc}" oninput="updatePreview()"/>
+    <input type="number" placeholder="Qty" min="1" value="${qty}" oninput="updatePreview()"/>
+    <button class="btn-remove" onclick="this.parentElement.remove();updatePreview()">×</button>
+  `;
+  document.getElementById('ffRows').appendChild(d);
+  updatePreview();
+}
+
+// ── DC pallet counter ──────────────────────────────────────────────────────
+function updateDCCounter() {
+  const dest  = document.getElementById('dest').value;
+  const count = dcPalletCounts[dest] || 0;
+  document.getElementById('palletNumDisplay').textContent = dest ? count + 1 : '—';
+  document.getElementById('dcPalletStatus').textContent   = dest ? `${count} logged this DC` : '0 logged this DC';
+}
+
+// ── Date formatter ─────────────────────────────────────────────────────────
+function formatLoadDate(val) {
+  if (!val) return '';
+  const [y,m,d] = val.split('-');
+  const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dt = new Date(+y, +m-1, +d);
+  return `${DAYS[dt.getDay()]} · ${MONTHS[+m-1]} ${+d}, ${y}`;
+}
+
+// ── Barcode ID builder ─────────────────────────────────────────────────────
+// Format: DDMMYY-DCCODE-PP  e.g. 170626-DLX-14
+function buildBarcodeId(dest, dateVal, palletNum) {
+  if (!dest || !dateVal) return null;
+  const [y,m,d] = dateVal.split('-');
+  const DC_CODE = {
+    'DALLAS DC':'DLX', 'ORLANDO DC':'ORL', 'ELGIN DC':'ELG',
+    '3K WAREHOUSE':'3KW', 'POPE':'PPE', 'RETAIL':'RTL'
+  };
+  const pad = n => String(n).padStart(2,'0');
+  return `${pad(d)}${pad(m)}${String(y).slice(2)}-${DC_CODE[dest]||'UNK'}-${pad(palletNum)}`;
+}
+
+// ── Render barcode ─────────────────────────────────────────────────────────
+function renderBarcode(id) {
+  if (!id) { document.getElementById('barcodeWrap').style.display = 'none'; return; }
+  try {
+    JsBarcode('#barcodeEl', id, {
+      format:      'CODE128',
+      width:       2,
+      height:      52,
+      displayValue: false,
+      margin:      0,
+      background:  '#FFFFFF',
+      lineColor:   '#111111',
+    });
+    document.getElementById('barcodeId').textContent = id;
+    document.getElementById('barcodeWrap').style.display = '';
+  } catch(e) {
+    document.getElementById('barcodeWrap').style.display = 'none';
+  }
+}
+
+// ── Live preview ───────────────────────────────────────────────────────────
+function updatePreview() {
+  const dest    = document.getElementById('dest').value;
+  const dateVal = document.getElementById('loadDate').value;
+  const notes   = document.getElementById('notes').value.trim();
+  const dcClass = DC_CLASS[dest] || '';
+  const palletN = (dcPalletCounts[dest] || 0) + 1;
+  const isFree  = currentMode === 'free';
+
+  // DC strip
+  document.getElementById('dcStrip').className = 'dc-strip ' + dcClass;
+
+  // Destination
+  const lblDest = document.getElementById('lblDest');
+  lblDest.textContent = dest || 'DESTINATION DC';
+  lblDest.className   = 'lbl-dest ' + dcClass;
+
+  // Date
+  document.getElementById('lblDate').textContent = dateVal ? formatLoadDate(dateVal) : 'Load Date';
+
+  // Pallet number
+  document.getElementById('lblPalletNum').textContent = dest ? palletN : '—';
+
+  // Type badge
+  const badge = document.getElementById('lblTypeBadge');
+  badge.textContent = isFree ? 'Parts / General Freight' : 'AFB Filter Shipment';
+  badge.className   = 'lbl-type-badge' + (isFree ? ' freeform' : '');
+
+  // Notes
+  const notesEl = document.getElementById('lblNotes');
+  if (notes) { notesEl.textContent = notes; notesEl.style.display = ''; }
+  else        { notesEl.style.display = 'none'; }
+
+  // Table
+  const thead = document.getElementById('lblTableHead');
+  const tbody = document.getElementById('lblSkuBody');
+  tbody.innerHTML = '';
+
+  if (isFree) {
+    thead.innerHTML = `<tr><th>Part / Item #</th><th>Description</th><th style="text-align:right">Qty</th></tr>`;
+    const rows = document.querySelectorAll('#ffRows .ff-row');
+    let any = false;
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const part = inputs[0].value.trim();
+      const desc = inputs[1].value.trim();
+      const qty  = inputs[2].value;
+      if (!part && !qty) return;
+      any = true;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="t-sku">${part || '—'}</td>
+        <td class="t-desc">${desc || ''}</td>
+        <td class="t-qty">${qty || '—'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    if (!any) tbody.innerHTML = `<tr><td colspan="3" style="color:#bbb;font-size:14px;font-weight:400;padding:10px 7px;">Add items above to preview</td></tr>`;
+  } else {
+    thead.innerHTML = `<tr><th>SKU</th><th>MERV</th><th style="text-align:right">Qty</th></tr>`;
+    const rows = document.querySelectorAll('#skuRows .sku-row');
+    let any = false;
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      const sku    = inputs[0].value.trim();
+      const merv   = inputs[1].value.trim();
+      const qty    = inputs[2].value;
+      if (!sku && !qty) return;
+      any = true;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="t-sku">AFB${sku || '—'}</td>
+        <td class="t-merv">${merv ? 'M'+merv : '—'}</td>
+        <td class="t-qty">${qty || '—'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    if (!any) tbody.innerHTML = `<tr><td colspan="3" style="color:#bbb;font-size:14px;font-weight:400;padding:10px 7px;">Fill in the form to preview your sheet</td></tr>`;
+  }
+
+  // Barcode — use generatedId if locked in, else show preview ID
+  const previewId = generatedId || (dest && dateVal ? buildBarcodeId(dest, dateVal, palletN) : null);
+  renderBarcode(previewId);
+
+  // Timestamp
+  document.getElementById('lblTimestamp').textContent = new Date().toLocaleString();
+}
+
+// ── Generate (lock in pallet number + barcode) ─────────────────────────────
+function generateLabel() {
+  const dest    = document.getElementById('dest').value;
+  const dateVal = document.getElementById('loadDate').value;
+  if (!dest)    { showStatus('Select a Destination DC first.', 'error'); return; }
+  if (!dateVal) { showStatus('Select a Load Date.', 'error'); return; }
+
+  const isFree = currentMode === 'free';
+  let hasContent = false;
+  if (isFree) {
+    document.querySelectorAll('#ffRows .ff-row').forEach(r => {
+      const inputs = r.querySelectorAll('input');
+      if (inputs[0].value.trim() || inputs[2].value) hasContent = true;
+    });
+  } else {
+    document.querySelectorAll('#skuRows .sku-row').forEach(r => {
+      const inputs = r.querySelectorAll('input');
+      if (inputs[0].value.trim() && inputs[2].value) hasContent = true;
+    });
+  }
+  if (!hasContent) { showStatus('Add at least one item with a quantity.', 'error'); return; }
+
+  // Increment DC pallet counter (rolls over at 26)
+  dcPalletCounts[dest] = (dcPalletCounts[dest] || 0) + 1;
+  if (dcPalletCounts[dest] > 26) dcPalletCounts[dest] = 1;
+
+  // Lock in barcode ID
+  generatedId = buildBarcodeId(dest, dateVal, dcPalletCounts[dest]);
+
+  updatePreview();
+  updateDCCounter();
+  showStatus(`Sheet generated — ${generatedId} · Pallet ${dcPalletCounts[dest]} of 26`, 'info');
+}
+
+// ── Print ──────────────────────────────────────────────────────────────────
+function printLabel() {
+  if (!generatedId) { showStatus('Generate the sheet first.', 'error'); return; }
+  window.print();
+}
+
+// ── Log to Drive ───────────────────────────────────────────────────────────
+async function logToSheets() {
+  const dest    = document.getElementById('dest').value;
+  const dateVal = document.getElementById('loadDate').value;
+  if (!dest || !dateVal) { showStatus('Complete Destination and Load Date before logging.', 'error'); return; }
+  if (currentMode !== 'afb') { showStatus('Drive logging is for AFB Filter shipments only. Freeform entries are for print only.', 'info'); return; }
+  if (!DC_SHEET_MAP[dest]) { showStatus('Drive logging applies to Dallas, Orlando, and Elgin DC shipments only.', 'info'); return; }
+
+  const rows = document.querySelectorAll('#skuRows .sku-row');
+  const skuEntries = [];
+  rows.forEach(r => {
+    const inputs = r.querySelectorAll('input');
+    const sku    = inputs[0].value.trim();
+    const merv   = inputs[1].value.trim();
+    const qty    = parseInt(inputs[2].value);
+    if (sku && qty > 0) skuEntries.push({ sku:`AFB${sku}`, merv, qty });
+  });
+  if (skuEntries.length === 0) { showStatus('No AFB SKU entries to log.', 'error'); return; }
+
+  showStatus('Searching Drive for distribution sheet…', 'loading');
+  try {
+    const prompt = buildDrivePrompt(dest, dateVal, skuEntries);
+    const result = await callClaudeWithDrive(prompt);
+    showStatus(result, 'info');
+  } catch(err) {
+    showStatus('Drive update failed: ' + err.message, 'error');
+  }
+}
+
+function buildDrivePrompt(dest, dateVal, skuEntries) {
+  const sheetName = DC_SHEET_MAP[dest];
+  const palletNum = dcPalletCounts[dest] || 1;
+  const fileName  = `distribution-${dateVal}`;
+  const skuLines  = skuEntries.map(e =>
+    `  - SKU: ${e.sku}M${e.merv}, Qty: ${e.qty} → append "1(${e.qty})" to Actual Ship Qty`
+  ).join('\n');
+
+  return `You are a Google Drive automation assistant for Filterbuy distribution operations.
+
+TASK: Find the distribution file for ${dateVal} and update Actual Ship Qty.
+
+FILE: Search Drive for title containing "${fileName}" under ICST Distribution Orders folder (ID: ${FOLDER_ID}). May be in a month subfolder like "06-2026".
+
+TAB: "${sheetName}" — columns: Destination | SKU | New Production | Excess | Daily Target | 3K | Actual Ship Qty
+
+PALLET: ${palletNum} of 26 (barcode: ${generatedId || 'not yet generated'})
+
+SKUs:
+${skuLines}
+
+STEPS:
+1. Search Drive for the file
+2. Download and parse the "${sheetName}" tab
+3. Match each SKU exactly (including MERV suffix e.g. M8, M11, M13, OE)
+4. Append "1(qty)" to Actual Ship Qty (col G), space-separated if cell already has entries
+5. Save back to Drive replacing original
+
+Confirm each SKU updated or flag any not matched. Under 200 words.`;
+}
+
+async function callClaudeWithDrive(prompt) {
+  showStatus('Connecting to Drive and updating…', 'loading');
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      mcp_servers: [{ type:'url', url:'https://drivemcp.googleapis.com/mcp/v1', name:'google-drive' }],
+      messages: [{ role:'user', content:prompt }]
+    })
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(()=>({}));
+    throw new Error(err.error?.message || `HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  return data.content.filter(b=>b.type==='text').map(b=>b.text).join(' ') || 'Drive updated.';
+}
+
+// ── Status helper ──────────────────────────────────────────────────────────
+function showStatus(msg, type) {
+  const bar = document.getElementById('statusBar');
+  bar.textContent = msg;
+  bar.className   = 'status-bar ' + type;
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.getElementById('loadDate').value = new Date().toISOString().split('T')[0];
+addSkuRow();
+updatePreview();
+</script>
+</body>
+</html>
