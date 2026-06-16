@@ -172,42 +172,34 @@ header .page-title {
 .status-bar.error   { background:#FFEBEE; color:#B71C1C; border:1px solid #FFCDD2; display:block; }
 .status-bar.loading { background:#E3F2FD; color:#0D47A1; border:1px solid #90CAF9; display:block; }
 
-/* Web App URL section */
-.webapp-section {
+/* Drive Sign-in section */
+.drive-section {
   margin-top:14px; border-top:1px solid var(--fb-rule); padding-top:14px;
 }
-.webapp-section h2 { margin-bottom:10px; }
-.webapp-row {
-  display:grid; grid-template-columns:1fr auto; gap:6px; align-items:center;
+.drive-section h2 { margin-bottom:10px; }
+.btn-google {
+  width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+  background:var(--fb-white); color:var(--fb-black); border:1.5px solid var(--fb-rule);
+  border-radius:5px; padding:10px 14px; font-family:'Barlow',sans-serif; font-size:13px;
+  font-weight:600; cursor:pointer; transition:all .15s; margin-bottom:8px;
 }
-.webapp-row input {
-  padding:8px 10px; border:1.5px solid var(--fb-rule); border-radius:4px;
-  font-family:'Barlow',sans-serif; font-size:12px; color:var(--fb-black);
-  background:var(--fb-white);
-}
-.webapp-row input:focus { outline:none; border-color:var(--fb-green); }
-.btn-url-save {
-  padding:8px 12px; background:var(--fb-green); color:#fff; border:none;
-  border-radius:4px; font-family:'Barlow Condensed',sans-serif; font-size:13px;
-  font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
-  white-space:nowrap; transition:background .15s;
-}
-.btn-url-save:hover { background:#006828; }
-.btn-url-clear {
+.btn-google:hover { border-color:var(--fb-green); background:#F6FFF9; }
+.btn-google svg { width:18px; height:18px; flex-shrink:0; }
+.btn-google-signout {
   background:none; border:none; font-size:11px; color:var(--fb-gray);
-  cursor:pointer; text-decoration:underline; padding:0; margin-top:4px;
-  font-family:'Barlow',sans-serif; display:block;
+  cursor:pointer; text-decoration:underline; font-family:'Barlow',sans-serif;
+  display:none;
 }
-.btn-url-clear:hover { color:var(--fb-red); }
-.url-status {
+.btn-google-signout:hover { color:var(--fb-red); }
+.drive-status {
   display:flex; align-items:center; gap:6px; margin-top:6px;
   font-size:11px; font-weight:600;
 }
-.url-status .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.url-status.set   .dot { background:#008533; }
-.url-status.unset .dot { background:#ccc; }
-.url-status.set   .url-label { color:#1B5E20; }
-.url-status.unset .url-label { color:var(--fb-gray); }
+.drive-status .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.drive-status.set   .dot { background:#008533; }
+.drive-status.unset .dot { background:#ccc; }
+.drive-status.set   .drive-label { color:#1B5E20; }
+.drive-status.unset .drive-label { color:var(--fb-gray); }
 
 /* ── Preview ── */
 .preview-area { padding:24px 28px; overflow-y:auto; background:#E0E0E0; }
@@ -433,20 +425,30 @@ hr.lbl-rule { border:none; border-top:1.5px solid var(--fb-rule); margin:14px 0;
 
   <div id="statusBar" class="status-bar"></div>
 
-  <!-- Web App URL -->
-  <div class="webapp-section">
+  <!-- Drive Connection -->
+  <div class="drive-section">
     <h2>Drive Connection</h2>
-    <div class="webapp-row">
-      <input type="url" id="webAppInput" placeholder="Paste Apps Script Web App URL…" autocomplete="off"/>
-      <button class="btn-url-save" onclick="saveWebAppUrl()">Save</button>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;">
+      <input type="url" id="webAppInput" placeholder="Paste Apps Script Web App URL…"
+             style="padding:8px 10px;border:1.5px solid var(--fb-rule);border-radius:4px;
+                    font-family:'Barlow',sans-serif;font-size:12px;width:100%;"/>
+      <button class="btn-url-save" onclick="saveWebAppUrl()"
+              style="padding:8px 12px;background:var(--fb-green);color:#fff;border:none;
+                     border-radius:4px;font-family:'Barlow Condensed',sans-serif;font-size:13px;
+                     font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+                     white-space:nowrap;">Save</button>
     </div>
-    <div class="url-status unset" id="urlStatus">
-      <span class="dot"></span>
-      <span class="url-label" id="urlLabel">Not connected — paste your Web App URL to enable Log to Drive</span>
+    <div class="drive-status unset" id="driveStatus" style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;font-weight:600;">
+      <span class="dot" style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#ccc;"></span>
+      <span id="driveLabel">Not connected — paste your Web App URL to enable Log to Drive</span>
     </div>
-    <button class="btn-url-clear" id="urlClearBtn" onclick="clearWebAppUrl()" style="display:none">Clear URL</button>
+    <button id="btnClearUrl" onclick="clearWebAppUrl()"
+            style="display:none;background:none;border:none;font-size:11px;color:var(--fb-gray);
+                   cursor:pointer;text-decoration:underline;margin-top:4px;font-family:'Barlow',sans-serif;">
+      Clear URL
+    </button>
     <div style="font-size:10px;color:var(--fb-gray);margin-top:6px;line-height:1.5;">
-      URL is saved to this browser — you only need to do this once. See setup guide in the Apps Script file.
+      URL saved to this browser — paste once and it stays. See Apps Script file for setup.
     </div>
   </div>
 
@@ -752,114 +754,97 @@ function printLabel() {
   window.print();
 }
 
-// ── Log to Drive via Apps Script ──────────────────────────────────────────
+// ── Pallet Log Sheet ID (created in your Drive) ───────────────────────────
+const PALLET_LOG_ID = '1szmcbGiWyHfAyPbZlq0REe53CMeLCacQq_JY3EXYCAI';
+
+// Web App URL — set once in Drive Connection below
+function getWebAppUrl() { return localStorage.getItem('fb_webapp_url') || ''; }
+
+function updateDriveStatus() {
+  const url    = getWebAppUrl();
+  const status = document.getElementById('driveStatus');
+  const label  = document.getElementById('driveLabel');
+  const clear  = document.getElementById('btnClearUrl');
+  if (url) {
+    status.className  = 'drive-status set';
+    label.textContent = 'Connected — Log to Drive is ready';
+    clear.style.display = 'block';
+  } else {
+    status.className  = 'drive-status unset';
+    label.textContent = 'Not connected — paste your Apps Script URL below';
+    clear.style.display = 'none';
+  }
+}
+
+function saveWebAppUrl() {
+  const val = document.getElementById('webAppInput').value.trim();
+  if (!val.startsWith('https://script.google.com')) {
+    showStatus('URL should start with https://script.google.com…', 'error'); return;
+  }
+  localStorage.setItem('fb_webapp_url', val);
+  document.getElementById('webAppInput').value = '';
+  updateDriveStatus();
+  showStatus('Drive connection saved.', 'info');
+}
+
+function clearWebAppUrl() {
+  localStorage.removeItem('fb_webapp_url');
+  updateDriveStatus();
+  showStatus('Drive connection cleared.', 'info');
+}
+
+// ── Log to Drive — no-cors fire-and-forget ────────────────────────────────
+// Apps Script receives the POST and writes to the distribution file.
+// We use no-cors so the browser never blocks it. We don't get a response
+// back, so we show a "Submitted" message and the script confirms via
+// the Pallet Log sheet's Status column turning green within ~1 minute.
 function logToSheets() {
   const dest    = document.getElementById('dest').value;
   const dateVal = document.getElementById('loadDate').value;
   if (!dest || !dateVal) { showStatus('Complete Destination and Load Date before logging.', 'error'); return; }
-  if (currentMode !== 'afb') { showStatus('Drive logging is for AFB Filter shipments only. Freeform entries are for print only.', 'info'); return; }
+  if (currentMode !== 'afb') { showStatus('Drive logging is for AFB Filter shipments only.', 'info'); return; }
   if (!DC_SHEET_MAP[dest]) { showStatus('Drive logging applies to Dallas, Orlando, and Elgin DC shipments only.', 'info'); return; }
 
-  const webAppUrl = localStorage.getItem('fb_webapp_url');
-  if (!webAppUrl) { showStatus('No Drive connection set up. Paste your Apps Script Web App URL in the Drive Connection section below.', 'error'); return; }
+  const webAppUrl = getWebAppUrl();
+  if (!webAppUrl) { showStatus('Paste your Apps Script Web App URL in Drive Connection below.', 'error'); return; }
 
   const rows = document.querySelectorAll('#skuRows .sku-row');
   const skuEntries = [];
   rows.forEach(r => {
     const inputs = r.querySelectorAll('input');
-    const sku    = inputs[0].value.trim();
-    const merv   = inputs[1].value.trim();
-    const qty    = parseInt(inputs[2].value);
+    const sku  = inputs[0].value.trim();
+    const merv = inputs[1].value.trim();
+    const qty  = parseInt(inputs[2].value);
     if (sku && qty > 0) skuEntries.push({ sku:'AFB'+sku, merv, qty });
   });
   if (skuEntries.length === 0) { showStatus('No AFB SKU entries to log.', 'error'); return; }
 
-  showStatus('Sending to Drive…', 'loading');
+  showStatus('Submitting to Drive…', 'loading');
 
   const payload = {
-    dest,
-    date:      dateVal,
-    skus:      skuEntries,
+    dest, date: dateVal, skus: skuEntries,
     barcodeId: generatedId || '',
-    palletNum: dcPalletCounts[dest] || 1
+    palletNum: dcPalletCounts[dest] || 1,
+    logSheetId: PALLET_LOG_ID
   };
 
-  // Use JSONP — injects a <script> tag so CORS is never an issue
-  const cbName  = 'fbCallback_' + Date.now();
-  const encoded = encodeURIComponent(JSON.stringify(payload));
-  const url     = webAppUrl + '?callback=' + cbName + '&payload=' + encoded;
-
-  const timeout = setTimeout(() => {
-    delete window[cbName];
-    document.getElementById('jsonpScript')?.remove();
-    showStatus('Drive request timed out. Check the Web App URL and that it is deployed as "Anyone can access".', 'error');
-  }, 15000);
-
-  window[cbName] = function(data) {
-    clearTimeout(timeout);
-    delete window[cbName];
-    document.getElementById('jsonpScript')?.remove();
-    if (data.success) {
-      showStatus(data.message, 'info');
-    } else {
-      showStatus('Drive update failed: ' + data.message, 'error');
-    }
-  };
-
-  const script  = document.createElement('script');
-  script.id     = 'jsonpScript';
-  script.src    = url;
-  script.onerror = () => {
-    clearTimeout(timeout);
-    delete window[cbName];
-    script.remove();
-    showStatus('Could not reach the Apps Script. Check your Web App URL is correct and deployed as "Anyone can access".', 'error');
-  };
-  document.head.appendChild(script);
+  // Send with no-cors — bypasses CORS block completely.
+  // The Apps Script receives and processes it; we confirm via Pallet Log.
+  fetch(webAppUrl, {
+    method: 'POST',
+    mode:   'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body:   JSON.stringify(payload)
+  }).then(() => {
+    showStatus(
+      '✓ Submitted ' + skuEntries.length + ' SKU' + (skuEntries.length > 1 ? 's' : '') +
+      ' to Drive. Check the Pallet Log sheet in ~1 min to confirm.',
+      'info'
+    );
+  }).catch(err => {
+    showStatus('Submission failed: ' + err.message, 'error');
+  });
 }
-
-// ── Web App URL management ────────────────────────────────────────────────
-function saveWebAppUrl() {
-  const input = document.getElementById('webAppInput');
-  const url   = input.value.trim();
-  if (!url || !url.startsWith('https://script.google.com')) {
-    showStatus('Invalid URL — should start with https://script.google.com…', 'error');
-    return;
-  }
-  localStorage.setItem('fb_webapp_url', url);
-  input.value = '';
-  updateUrlStatus();
-  showStatus('Drive connection saved. Log to Drive is ready.', 'info');
-}
-
-function clearWebAppUrl() {
-  localStorage.removeItem('fb_webapp_url');
-  document.getElementById('webAppInput').value = '';
-  updateUrlStatus();
-  showStatus('Drive connection cleared.', 'info');
-}
-
-function updateUrlStatus() {
-  const url      = localStorage.getItem('fb_webapp_url');
-  const status   = document.getElementById('urlStatus');
-  const label    = document.getElementById('urlLabel');
-  const clearBtn = document.getElementById('urlClearBtn');
-  if (url) {
-    status.className  = 'url-status set';
-    label.textContent = 'Connected — Log to Drive is ready';
-    clearBtn.style.display = 'block';
-  } else {
-    status.className  = 'url-status unset';
-    label.textContent = 'Not connected — paste your Web App URL to enable Log to Drive';
-    clearBtn.style.display = 'none';
-  }
-}
-
-// Allow Enter in URL input
-document.addEventListener('DOMContentLoaded', () => {
-  const urlInput = document.getElementById('webAppInput');
-  if (urlInput) urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveWebAppUrl(); });
-});
 
 // ── Status helper ──────────────────────────────────────────────────────────
 function showStatus(msg, type) {
@@ -872,7 +857,7 @@ function showStatus(msg, type) {
 document.getElementById('loadDate').value = new Date().toISOString().split('T')[0];
 addSkuRow();
 updatePreview();
-updateUrlStatus();
+updateDriveStatus();
 </script>
 </body>
 </html>
