@@ -784,13 +784,14 @@ async function logToSheets() {
       palletNum: dcPalletCounts[dest] || 1
     };
 
-    const response = await fetch(webAppUrl, {
-      method:  'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body:    JSON.stringify(payload)
-    });
+    // Apps Script requires a GET with encoded payload to avoid CORS issues
+    // We encode the payload as a base64 URL param and use GET
+    const encoded = encodeURIComponent(JSON.stringify(payload));
+    const url     = webAppUrl + '?payload=' + encoded;
 
-    const data = await response.json();
+    const response = await fetch(url, { method: 'GET' });
+    const data     = await response.json();
+
     if (data.success) {
       showStatus(data.message, 'info');
     } else {
