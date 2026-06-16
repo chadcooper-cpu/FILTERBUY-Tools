@@ -753,7 +753,7 @@ function printLabel() {
 }
 
 // ── Log to Drive via Apps Script ──────────────────────────────────────────
-async function logToSheets() {
+function logToSheets() {
   const dest    = document.getElementById('dest').value;
   const dateVal = document.getElementById('loadDate').value;
   if (!dest || !dateVal) { showStatus('Complete Destination and Load Date before logging.', 'error'); return; }
@@ -775,31 +775,47 @@ async function logToSheets() {
   if (skuEntries.length === 0) { showStatus('No AFB SKU entries to log.', 'error'); return; }
 
   showStatus('Sending to Drive…', 'loading');
-  try {
-    const payload = {
-      dest,
-      date:      dateVal,
-      skus:      skuEntries,
-      barcodeId: generatedId || '',
-      palletNum: dcPalletCounts[dest] || 1
-    };
 
-    // Apps Script requires a GET with encoded payload to avoid CORS issues
-    // We encode the payload as a base64 URL param and use GET
-    const encoded = encodeURIComponent(JSON.stringify(payload));
-    const url     = webAppUrl + '?payload=' + encoded;
+  const payload = {
+    dest,
+    date:      dateVal,
+    skus:      skuEntries,
+    barcodeId: generatedId || '',
+    palletNum: dcPalletCounts[dest] || 1
+  };
 
-    const response = await fetch(url, { method: 'GET' });
-    const data     = await response.json();
+  // Use JSONP — injects a <script> tag so CORS is never an issue
+  const cbName  = 'fbCallback_' + Date.now();
+  const encoded = encodeURIComponent(JSON.stringify(payload));
+  const url     = webAppUrl + '?callback=' + cbName + '&payload=' + encoded;
 
+  const timeout = setTimeout(() => {
+    delete window[cbName];
+    document.getElementById('jsonpScript')?.remove();
+    showStatus('Drive request timed out. Check the Web App URL and that it is deployed as "Anyone can access".', 'error');
+  }, 15000);
+
+  window[cbName] = function(data) {
+    clearTimeout(timeout);
+    delete window[cbName];
+    document.getElementById('jsonpScript')?.remove();
     if (data.success) {
       showStatus(data.message, 'info');
     } else {
       showStatus('Drive update failed: ' + data.message, 'error');
     }
-  } catch(err) {
+  };
+
+  const script  = document.createElement('script');
+  script.id     = 'jsonpScript';
+  script.src    = url;
+  script.onerror = () => {
+    clearTimeout(timeout);
+    delete window[cbName];
+    script.remove();
     showStatus('Could not reach the Apps Script. Check your Web App URL is correct and deployed as "Anyone can access".', 'error');
-  }
+  };
+  document.head.appendChild(script);
 }
 
 // ── Web App URL management ────────────────────────────────────────────────
