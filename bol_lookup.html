@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOL Lookup — Filterbuy</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
+
+  .page-header {
+    background: #008533; color: #fff; padding: 12px 20px;
+    border-radius: 6px 6px 0 0;
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 900px; margin: 0 auto;
+  }
+  .page-header h1 { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .record-count-badge {
+    background: rgba(255,255,255,0.25); color: #fff;
+    font-size: 12px; padding: 3px 10px; border-radius: 10px;
+  }
+
+  .main-card {
+    background: #fff; border: 2px solid #008533; border-top: none;
+    border-radius: 0 0 6px 6px; padding: 20px;
+    max-width: 900px; margin: 0 auto 24px auto;
+  }
+
+  /* ── SEARCH BAR ── */
+  .search-bar {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;
+    padding-bottom: 16px; border-bottom: 1px solid #e0e0e0;
+  }
+  .search-bar input, .search-bar select {
+    padding: 9px 12px; border: 1px solid #ccc; border-radius: 4px;
+    font-size: 13px; background: #fff;
+  }
+  .search-bar input:focus, .search-bar select:focus { outline: none; border-color: #008533; }
+  .sb-bol    { flex: 2; min-width: 160px; }
+  .sb-dest   { flex: 1; min-width: 140px; }
+  .sb-date-from, .sb-date-to { flex: 1; min-width: 130px; }
+  .sb-pallet { flex: 2; min-width: 160px; }
+  .btn-search {
+    background: #008533; color: #fff; border: none; border-radius: 4px;
+    padding: 9px 22px; font-size: 13px; font-weight: bold; cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-reset {
+    background: #888; color: #fff; border: none; border-radius: 4px;
+    padding: 9px 14px; font-size: 13px; cursor: pointer;
+  }
+
+  /* ── RESULTS LIST ── */
+  .results-header {
+    font-size: 12px; color: #666; margin-bottom: 10px; font-style: italic;
+  }
+  .results-header strong { color: #333; font-style: normal; }
+
+  .bol-card {
+    border: 1px solid #ddd; border-radius: 5px; margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .bol-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; background: #f8f8f8; cursor: pointer;
+    border-bottom: 1px solid #ddd; gap: 8px; flex-wrap: wrap;
+  }
+  .bol-card-header:hover { background: #f0f7f0; }
+  .bol-num { font-size: 15px; font-weight: bold; color: #008533; }
+  .bol-meta-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .chip {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: bold;
+  }
+  .chip-dest  { background: #e8f5e9; color: #005a22; }
+  .chip-date  { background: #e3f2fd; color: #0d47a1; }
+  .chip-count { background: #f3e5f5; color: #4a148c; }
+  .chip-pieces { background: #fff3e0; color: #e65100; }
+  .chip-locked { background: #fce4ec; color: #880e4f; font-size: 10px; }
+  .bol-expand-icon { color: #aaa; font-size: 14px; margin-left: auto; }
+
+  .bol-card-body { display: none; padding: 14px; }
+  .bol-card-body.open { display: block; }
+
+  /* ── BOL DETAIL ── */
+  .bol-detail-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px 16px; margin-bottom: 14px; font-size: 12px;
+  }
+  .dg-item .dg-key { font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 1px; }
+  .dg-item .dg-val { font-weight: bold; color: #222; }
+
+  /* ── PALLET TABLE ── */
+  .pallet-section-title {
+    font-size: 11px; font-weight: bold; text-transform: uppercase;
+    color: #555; letter-spacing: 0.5px; margin-bottom: 6px; margin-top: 6px;
+  }
+  .pallet-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 12px; }
+  .pallet-table th {
+    background: #333; color: #fff; padding: 5px 10px;
+    text-align: left; font-size: 11px;
+  }
+  .pallet-table td { padding: 5px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+  .pallet-table tr:last-child td { border-bottom: none; }
+  .pallet-table tr:hover td { background: #fafff9; }
+  .pallet-id-cell { font-family: monospace; font-size: 11px; color: #333; }
+  .pallet-skus { font-size: 11px; line-height: 1.6; }
+  .sku-entry { white-space: nowrap; }
+  .highlight { background: #fff59d; border-radius: 2px; padding: 0 2px; }
+  .unknown-tag { color: #c0392b; font-size: 10px; font-style: italic; }
+
+  /* ── SKU SUMMARY ── */
+  .sku-summary { border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+  .sku-summary-header {
+    background: #1a3a1a; color: #fff; padding: 5px 10px;
+    font-size: 11px; font-weight: bold; text-transform: uppercase;
+  }
+  .sku-summary-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .sku-summary-table th { background: #f0f0f0; padding: 4px 10px; font-size: 11px; border-bottom: 1px solid #ccc; text-align: left; }
+  .sku-summary-table td { padding: 4px 10px; border-bottom: 1px solid #eee; }
+  .sku-summary-table tr:last-child td { border-bottom: none; font-weight: bold; background: #f5fff5; }
+
+  .bol-card-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .btn-reprint {
+    background: #008533; color: #fff; border: none; border-radius: 4px;
+    padding: 7px 16px; font-size: 12px; font-weight: bold; cursor: pointer;
+  }
+  .btn-reprint:hover { background: #006628; }
+  .btn-export {
+    background: #1565c0; color: #fff; border: none; border-radius: 4px;
+    padding: 7px 16px; font-size: 12px; cursor: pointer;
+  }
+
+  .no-results {
+    text-align: center; padding: 32px; color: #888; font-size: 14px;
+  }
+  .no-results .big { font-size: 32px; margin-bottom: 8px; }
+
+  /* ── PRINT ── */
+  #print-area { display: none; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .page-header, .main-card { display: none !important; }
+    #print-area { display: block !important; }
+  }
+
+  /* reuse manifest copy styles from packing slip */
+  .manifest-copy {
+    page-break-after: always; border: 4px solid #000; padding: 14px;
+    max-width: 680px; margin: 0 auto 20px auto; font-family: Arial, sans-serif;
+  }
+  .manifest-copy:last-child { page-break-after: avoid; }
+  .mc-logo { background: #008533; color: #fff; text-align: center; padding: 8px; margin-bottom: 10px; }
+  .mc-logo .co { font-size: 22px; font-weight: bold; letter-spacing: 3px; }
+  .mc-logo .tl { font-size: 9px; }
+  .mc-title { text-align: center; font-size: 15px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 8px; letter-spacing: 1px; }
+  .mc-copy-label { text-align: right; font-size: 10px; color: #888; font-weight: bold; margin-bottom: 6px; }
+  .mc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; margin-bottom: 8px; font-size: 11px; }
+  .mc-meta .k { font-weight: bold; color: #444; }
+  .mc-meta .v { font-weight: bold; }
+  .mc-barcode { text-align: center; margin: 8px 0; }
+  .mc-barcode svg { max-width: 100%; }
+  .mc-barcode-id { font-size: 9px; color: #555; text-align: center; }
+  .mc-sku-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px; }
+  .mc-sku-table th { background: #333; color: #fff; padding: 4px 8px; text-align: left; }
+  .mc-sku-table td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
+  .mc-sku-table tr.sku-group-header td { background: #e8e8e8; font-weight: bold; border-top: 2px solid #333; }
+  .mc-sku-table tr.pallet-row td { font-family: monospace; font-size: 10px; padding-left: 18px; }
+  .mc-sku-table tr.sku-total-row td { font-weight: bold; background: #f5fff5; border-top: 1px solid #999; border-bottom: 2px solid #333; }
+  .mc-grand-total { border: 3px solid #000; text-align: center; padding: 6px; margin-top: 8px; }
+  .mc-grand-total .gt-num { font-size: 28px; font-weight: bold; }
+  .mc-grand-total .gt-lbl { font-size: 9px; text-transform: uppercase; color: #555; }
+  .mc-pallet-count { text-align: center; font-size: 12px; font-weight: bold; margin-top: 6px; }
+  .mc-sig { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .mc-sig .sig-field { border-bottom: 1px solid #000; padding-bottom: 18px; font-size: 9px; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>BOL LOOKUP</h1>
+  <div class="header-right">
+    <span class="record-count-badge" id="total-badge">0 records</span>
+  </div>
+</div>
+
+<div class="main-card">
+  <!-- SEARCH BAR -->
+  <div class="search-bar">
+    <input class="sb-bol"       id="s-bol"       type="text"   placeholder="BOL # (partial OK)">
+    <select class="sb-dest"     id="s-dest">
+      <option value="">All Destinations</option>
+      <option>DALLAS DC</option>
+      <option>ORLANDO DC</option>
+      <option>ELGIN DC</option>
+      <option>OTHER</option>
+    </select>
+    <input class="sb-date-from" id="s-from"      type="date"   title="Ship date from">
+    <input class="sb-date-to"   id="s-to"        type="date"   title="Ship date to">
+    <input class="sb-pallet"    id="s-pallet"    type="text"   placeholder="Pallet ID (partial OK)">
+    <button class="btn-search"  onclick="runSearch()">Search</button>
+    <button class="btn-reset"   onclick="resetSearch()">Reset</button>
+  </div>
+
+  <div class="results-header" id="results-header"></div>
+  <div id="results-list"></div>
+</div>
+
+<!-- PRINT AREA -->
+<div id="print-area"></div>
+
+<script>
+// ── LOAD RECORDS ──
+function loadRecords() {
+  return JSON.parse(localStorage.getItem('fb_bol_records') || '[]')
+    .sort((a, b) => new Date(b.closedAt) - new Date(a.closedAt)); // newest first
+}
+
+// ── SEARCH ──
+function runSearch() {
+  const bolQ     = document.getElementById('s-bol').value.trim().toUpperCase();
+  const destQ    = document.getElementById('s-dest').value;
+  const fromQ    = document.getElementById('s-from').value;
+  const toQ      = document.getElementById('s-to').value;
+  const palletQ  = document.getElementById('s-pallet').value.trim().toUpperCase();
+
+  const all = loadRecords();
+  updateTotalBadge(all.length);
+
+  const filtered = all.filter(r => {
+    if (bolQ    && !r.bol.toUpperCase().includes(bolQ))   return false;
+    if (destQ   && r.dest !== destQ)                       return false;
+    if (fromQ   && r.shipDate && r.shipDate < fromQ)       return false;
+    if (toQ     && r.shipDate && r.shipDate > toQ)         return false;
+    if (palletQ && !r.pallets.some(p => p.id.toUpperCase().includes(palletQ))) return false;
+    return true;
+  });
+
+  renderResults(filtered, { bolQ, palletQ });
+}
+
+function resetSearch() {
+  ['s-bol','s-from','s-to','s-pallet'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('s-dest').value = '';
+  runSearch();
+}
+
+function updateTotalBadge(n) {
+  document.getElementById('total-badge').textContent = `${n} record${n !== 1 ? 's' : ''}`;
+}
+
+// ── RENDER RESULTS ──
+function renderResults(records, { bolQ='', palletQ='' } = {}) {
+  const hdr = document.getElementById('results-header');
+  const list = document.getElementById('results-list');
+
+  hdr.innerHTML = records.length === 0
+    ? ''
+    : `Showing <strong>${records.length}</strong> result${records.length !== 1 ? 's' : ''}`;
+
+  if (records.length === 0) {
+    list.innerHTML = `<div class="no-results"><div class="big">🔍</div>No records found.<br><small>Adjust your search or close a trailer in the Packing Slip tool to create records.</small></div>`;
+    return;
+  }
+
+  list.innerHTML = records.map((r, idx) => buildBolCard(r, idx, bolQ, palletQ)).join('');
+}
+
+function hl(text, query) {
+  if (!query || !text) return text || '';
+  const idx = text.toUpperCase().indexOf(query.toUpperCase());
+  if (idx < 0) return text;
+  return text.slice(0, idx) + `<span class="highlight">${text.slice(idx, idx + query.length)}</span>` + text.slice(idx + query.length);
+}
+
+function buildBolCard(r, idx, bolQ, palletQ) {
+  const closedDate = r.closedAt ? new Date(r.closedAt).toLocaleDateString() : '—';
+  const shipDisp   = r.shipDateDisplay || r.shipDate || '—';
+
+  // SKU summary across all pallets
+  const skuTotals = {};
+  for (const p of r.pallets) {
+    for (const s of (p.skus || [])) {
+      skuTotals[s.sku] = (skuTotals[s.sku] || 0) + s.qty;
+    }
+  }
+  const skuEntries = Object.entries(skuTotals);
+
+  const palletRows = r.pallets.map(p => {
+    const skuHtml = (p.skus || []).map(s =>
+      `<span class="sku-entry">${s.sku} × ${s.qty}</span>`
+    ).join('<br>') || (p.unknown ? '<span class="unknown-tag">Unknown pallet</span>' : '—');
+
+    const idHighlighted = palletQ ? hl(p.id, palletQ) : p.id;
+    return `
+      <tr>
+        <td class="pallet-id-cell">${idHighlighted}</td>
+        <td>${p.dest || '—'}</td>
+        <td>${p.merv || '—'}</td>
+        <td>${p.mfg || '—'}</td>
+        <td class="pallet-skus">${skuHtml}</td>
+        <td style="text-align:right;font-weight:bold;">${p.totalQty || 0}</td>
+        <td>${p.loadDateDisplay || p.loadDate || '—'}</td>
+      </tr>`;
+  }).join('');
+
+  const skuSummaryRows = skuEntries.map(([sku, qty]) =>
+    `<tr><td>${sku}</td><td style="text-align:right;font-weight:bold;">${qty}</td></tr>`
+  ).join('');
+  const grandRow = `<tr><td style="text-align:right;">TOTAL</td><td style="text-align:right;">${r.totalPieces}</td></tr>`;
+
+  return `
+  <div class="bol-card" id="card-${idx}">
+    <div class="bol-card-header" onclick="toggleCard(${idx})">
+      <span class="bol-num">${hl(r.bol, bolQ)}</span>
+      <div class="bol-meta-chips">
+        <span class="chip chip-dest">${r.dest}</span>
+        <span class="chip chip-date">Ship: ${shipDisp}</span>
+        <span class="chip chip-count">${r.palletCount} pallet${r.palletCount !== 1 ? 's' : ''}</span>
+        <span class="chip chip-pieces">${r.totalPieces} pcs</span>
+        ${r.locked ? '<span class="chip chip-locked">🔒 LOCKED</span>' : ''}
+      </div>
+      <span class="bol-expand-icon" id="icon-${idx}">▼</span>
+    </div>
+    <div class="bol-card-body" id="body-${idx}">
+      <div class="bol-detail-grid">
+        <div class="dg-item"><div class="dg-key">BOL #</div><div class="dg-val">${r.bol}</div></div>
+        <div class="dg-item"><div class="dg-key">Slip ID</div><div class="dg-val" style="font-family:monospace;font-size:10px;">${r.slipId}</div></div>
+        <div class="dg-item"><div class="dg-key">Destination</div><div class="dg-val">${r.dest}</div></div>
+        <div class="dg-item"><div class="dg-key">Carrier</div><div class="dg-val">${r.carrier || '—'}</div></div>
+        <div class="dg-item"><div class="dg-key">Trailer #</div><div class="dg-val">${r.trailer || '—'}</div></div>
+        <div class="dg-item"><div class="dg-key">Ship Date</div><div class="dg-val">${shipDisp}</div></div>
+        <div class="dg-item"><div class="dg-key">Prepared By</div><div class="dg-val">${r.prepBy || '—'}</div></div>
+        <div class="dg-item"><div class="dg-key">Opened</div><div class="dg-val" style="font-size:11px;">${new Date(r.openedAt).toLocaleString()}</div></div>
+        <div class="dg-item"><div class="dg-key">Closed</div><div class="dg-val" style="font-size:11px;">${new Date(r.closedAt).toLocaleString()}</div></div>
+        <div class="dg-item"><div class="dg-key">Pallets</div><div class="dg-val">${r.palletCount}</div></div>
+        <div class="dg-item"><div class="dg-key">Total Pieces</div><div class="dg-val">${r.totalPieces}</div></div>
+      </div>
+
+      ${skuEntries.length > 0 ? `
+      <div class="sku-summary">
+        <div class="sku-summary-header">SKU Summary — All Pallets</div>
+        <table class="sku-summary-table">
+          <thead><tr><th>SKU</th><th style="text-align:right;">Total Qty</th></tr></thead>
+          <tbody>${skuSummaryRows}${grandRow}</tbody>
+        </table>
+      </div>` : ''}
+
+      <div class="pallet-section-title">Pallets on this BOL (${r.palletCount})</div>
+      <table class="pallet-table">
+        <thead>
+          <tr>
+            <th>Pallet ID</th>
+            <th>Dest</th>
+            <th>MERV</th>
+            <th>Mfg</th>
+            <th>SKUs</th>
+            <th style="text-align:right;">Qty</th>
+            <th>Load Date</th>
+          </tr>
+        </thead>
+        <tbody>${palletRows}</tbody>
+      </table>
+
+      <div class="bol-card-actions">
+        <button class="btn-reprint" onclick="reprintManifest(${idx})">🖨 Reprint Manifest (3 copies)</button>
+        <button class="btn-export" onclick="exportBolCsv(${idx})">⬇ Export CSV</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(idx) {
+  const body = document.getElementById('body-' + idx);
+  const icon = document.getElementById('icon-' + idx);
+  const open = body.classList.toggle('open');
+  icon.textContent = open ? '▲' : '▼';
+}
+
+// ── REPRINT MANIFEST ──
+function reprintManifest(idx) {
+  const records = loadRecords(); // use full sorted list matching current card order
+  // We need to map idx back to the filtered set — simpler: re-run search to get filtered records
+  const filtered = getFilteredRecords();
+  const r = filtered[idx];
+  if (!r) return;
+
+  // Build SKU map
+  const skuMap = {};
+  for (const pallet of r.pallets) {
+    for (const s of (pallet.skus || [])) {
+      if (!skuMap[s.sku]) skuMap[s.sku] = [];
+      skuMap[s.sku].push({ palletId: pallet.id, qty: s.qty });
+    }
+  }
+
+  const copies = ['CARRIER COPY', 'DOCK COPY', 'FILE COPY'];
+  let html = '';
+  for (const copyLabel of copies) {
+    const tableRows = Object.entries(skuMap).map(([sku, entries]) => {
+      const skuTotal = entries.reduce((s, e) => s + e.qty, 0);
+      const palletRows = entries.map(e => `
+        <tr class="pallet-row">
+          <td colspan="2" style="padding-left:18px;font-size:10px;color:#555;">${e.palletId}</td>
+          <td style="text-align:right;font-size:10px;">${e.qty}</td>
+        </tr>`).join('');
+      return `
+        <tr class="sku-group-header"><td colspan="2">${sku}</td><td></td></tr>
+        ${palletRows}
+        <tr class="sku-total-row">
+          <td colspan="2" style="text-align:right;font-size:10px;">SKU TOTAL</td>
+          <td style="text-align:right;">${skuTotal}</td>
+        </tr>`;
+    }).join('');
+
+    html += `
+    <div class="manifest-copy">
+      <div class="mc-logo"><div class="co">FILTERBUY</div><div class="tl">BETTER AIR FOR ALL</div></div>
+      <div class="mc-copy-label">${copyLabel} — REPRINT</div>
+      <div class="mc-title">TRAILER MANIFEST</div>
+      <div class="mc-meta">
+        <span class="k">BOL #</span><span class="v">${r.bol}</span>
+        <span class="k">Destination</span><span class="v">${r.dest}</span>
+        <span class="k">Carrier</span><span class="v">${r.carrier || '—'}</span>
+        <span class="k">Trailer #</span><span class="v">${r.trailer || '—'}</span>
+        <span class="k">Ship Date</span><span class="v">${r.shipDateDisplay || r.shipDate || '—'}</span>
+        <span class="k">Prepared By</span><span class="v">${r.prepBy || '—'}</span>
+        <span class="k">Closed</span><span class="v">${new Date(r.closedAt).toLocaleString()}</span>
+        <span class="k">Slip ID</span><span class="v" style="font-size:9px;font-family:monospace;">${r.slipId}</span>
+      </div>
+      <div class="mc-barcode">
+        <svg id="rp-bc-${copyLabel.replace(/ /g,'_')}"></svg>
+        <div class="mc-barcode-id">${r.slipId}</div>
+      </div>
+      <table class="mc-sku-table">
+        <thead><tr><th>SKU</th><th>Pallet</th><th style="text-align:right;">Qty</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div class="mc-grand-total">
+        <div class="gt-num">${r.totalPieces}</div>
+        <div class="gt-lbl">Total Pieces</div>
+      </div>
+      <div class="mc-pallet-count">${r.palletCount} Pallet${r.palletCount !== 1 ? 's' : ''} Total</div>
+      <div class="mc-sig">
+        <div class="sig-field">Loaded By: ___________________</div>
+        <div class="sig-field">Received By: ___________________</div>
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('print-area').innerHTML = html;
+  requestAnimationFrame(() => {
+    copies.forEach(c => {
+      try {
+        JsBarcode('#rp-bc-' + c.replace(/ /g,'_'), r.slipId, {
+          format:'CODE128', width:2, height:40, displayValue:false, margin:4
+        });
+      } catch(e) {}
+    });
+    setTimeout(() => window.print(), 300);
+  });
+}
+
+// ── EXPORT CSV ──
+function exportBolCsv(idx) {
+  const filtered = getFilteredRecords();
+  const r = filtered[idx];
+  if (!r) return;
+
+  const rows = [['BOL','SlipID','Destination','Carrier','Trailer','ShipDate','ClosedAt','PalletID','PalletDest','MERV','Mfg','SKU','SKUQty','PalletTotalQty','PalletLoadDate']];
+  for (const p of r.pallets) {
+    if ((p.skus || []).length === 0) {
+      rows.push([r.bol, r.slipId, r.dest, r.carrier, r.trailer, r.shipDate, r.closedAt,
+        p.id, p.dest, p.merv, p.mfg, '', '', p.totalQty, p.loadDate]);
+    } else {
+      for (const s of p.skus) {
+        rows.push([r.bol, r.slipId, r.dest, r.carrier, r.trailer, r.shipDate, r.closedAt,
+          p.id, p.dest, p.merv, p.mfg, s.sku, s.qty, p.totalQty, p.loadDate]);
+      }
+    }
+  }
+
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `BOL_${r.bol}_${r.shipDate || 'nodate'}.csv`;
+  a.click();
+}
+
+// ── HELPER: get currently filtered records ──
+function getFilteredRecords() {
+  const bolQ    = document.getElementById('s-bol').value.trim().toUpperCase();
+  const destQ   = document.getElementById('s-dest').value;
+  const fromQ   = document.getElementById('s-from').value;
+  const toQ     = document.getElementById('s-to').value;
+  const palletQ = document.getElementById('s-pallet').value.trim().toUpperCase();
+  return loadRecords().filter(r => {
+    if (bolQ    && !r.bol.toUpperCase().includes(bolQ))   return false;
+    if (destQ   && r.dest !== destQ)                       return false;
+    if (fromQ   && r.shipDate && r.shipDate < fromQ)       return false;
+    if (toQ     && r.shipDate && r.shipDate > toQ)         return false;
+    if (palletQ && !r.pallets.some(p => p.id.toUpperCase().includes(palletQ))) return false;
+    return true;
+  });
+}
+
+// ── INIT ──
+const allRecords = loadRecords();
+updateTotalBadge(allRecords.length);
+renderResults(allRecords);
+</script>
+</body>
+</html>
