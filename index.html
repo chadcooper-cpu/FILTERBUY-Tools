@@ -119,6 +119,7 @@
   .badge-print   { background: var(--green-pale); color: var(--green-dark); }
   .badge-scan    { background: #003366; color: #fff; }
   .badge-new     { background: #7A3B00; color: #fff; }
+  .badge-nl      { background: #c0392b; color: #fff; }
 
   /* ── FOOTER ── */
   .site-footer {
@@ -222,6 +223,35 @@
         <div class="tool-name">House Label Print</div>
         <div class="tool-desc">Generate Avery HL-5162 house labels (2×7, 14-up). Select day, DC, and date to print a full sheet.</div>
         <span class="tool-badge badge-print">Print Only</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- TRAILER LOADING — NOT LOGGING -->
+  <div class="section">
+    <div class="section-label">Trailer Loading — Not Logging</div>
+    <div class="tool-grid">
+
+      <a class="tool-card" href="master_pallet_label_NL.html">
+        <span class="tool-icon">🏷️</span>
+        <div class="tool-name">Master Pallet Label (NL)</div>
+        <div class="tool-desc">Generate 4"×6" pallet labels for staged production pallets. SKU, MERV, qty, load date, and destination. Reprint lost/damaged labels from staged list.</div>
+        <span class="tool-badge badge-nl">Not Logging</span>
+      </a>
+
+      <a class="tool-card" href="master_packing_slip_NL.html">
+        <span class="tool-icon">📋</span>
+        <div class="tool-name">Master Packing Slip (NL)</div>
+        <div class="tool-desc">Paste from schedule to auto-fill. Generates slip barcode to open trailer, scan pallets, close trailer and auto-print 3-copy manifest. Writes BOL record to Google Sheets on close.</div>
+        <span class="tool-badge badge-scan">Scan + Sheets</span>
+      </a>
+
+      <a class="tool-card" href="bol_lookup.html">
+        <span class="tool-icon">🔍</span>
+        <div class="tool-name">BOL Lookup</div>
+        <div class="tool-desc">Search closed BOL records by BOL#, destination, date range, or pallet ID. View SKU summaries, pallet detail, reprint manifests, and export to CSV.</div>
+        <span class="tool-badge badge-live">Record Search</span>
       </a>
 
     </div>
