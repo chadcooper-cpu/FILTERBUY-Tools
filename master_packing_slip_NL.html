@@ -1,128 +1,745 @@
-// ============================================================
-// Filterbuy — Distribution Only BOL Logger
-// Deploy as Web App:
-//   Execute as: Me (chad.cooper@filterbuy.com)
-//   Who has access: Anyone  (or Anyone within Filterbuy)
-// ============================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Packing Slip — NOT LOGGING</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
 
-const SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzByASZsx_WhWqWOgHQVxcnrykUsB70C_uDiEalUwkVP6LV_uNljANUTIi4YBjJEk_C/exec';
+  .page-header {
+    background: #008533; color: #fff; padding: 12px 20px;
+    border-radius: 6px 6px 0 0;
+    display: flex; align-items: center; justify-content: space-between;
+    max-width: 760px; margin: 0 auto;
+  }
+  .page-header h1 { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+  .nl-badge { background: #c0392b; color: #fff; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 3px; letter-spacing: 1px; }
 
-const HEADERS = [
-  'Closed At',
-  'BOL #',
-  'Slip ID',
-  'Destination',
-  'Carrier',
-  'Trailer #',
-  'Ship Date',
-  'Pallet Count',
-  'Total Pieces',
-  'Pallet IDs',
-  'SKU Summary'
-];
+  .main-card {
+    background: #fff; border: 2px solid #008533; border-top: none;
+    border-radius: 0 0 6px 6px; padding: 20px;
+    max-width: 760px; margin: 0 auto 24px auto;
+  }
 
-// Tab name mapping — matches what the HTML tool sends as dest
-const TAB_MAP = {
-  'DALLAS DC':  'DALLAS DC',
-  'ORLANDO DC': 'ORLANDO DC',
-  'ELGIN DC':   'ELGIN DC',
-};
+  /* ── TABS ── */
+  .tabs { display: flex; margin-bottom: 0; border-bottom: 2px solid #008533; }
+  .tab-btn {
+    padding: 9px 22px; border: 1px solid #ccc; border-bottom: none;
+    background: #eee; cursor: pointer; font-size: 13px; font-weight: bold;
+    border-radius: 4px 4px 0 0; margin-right: 3px; color: #555;
+  }
+  .tab-btn.active { background: #008533; color: #fff; border-color: #008533; }
+  .tab-panel { display: none; padding-top: 18px; }
+  .tab-panel.active { display: block; }
 
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    appendBolRecord(data);
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'ok' }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
-      .setMimeType(ContentService.MimeType.JSON);
+  label { font-size: 11px; font-weight: bold; color: #444; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  input, select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; margin-bottom: 12px; }
+  input:focus, select:focus { outline: none; border-color: #008533; }
+
+  .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .form-group { flex: 1; min-width: 140px; }
+
+  .btn-primary { background: #008533; color: #fff; border: none; border-radius: 5px; padding: 11px 28px; font-size: 15px; font-weight: bold; cursor: pointer; }
+  .btn-primary:hover { background: #006628; }
+  .btn-secondary { background: #555; color: #fff; border: none; border-radius: 5px; padding: 11px 20px; font-size: 14px; cursor: pointer; }
+
+  /* ── PASTE AREA ── */
+  .paste-zone { margin-bottom: 16px; padding: 12px; background: #f0f7f0; border: 1px solid #b2dfb2; border-radius: 5px; }
+  .paste-zone label { color: #005a22; margin-bottom: 6px; }
+  .paste-row { display: flex; gap: 8px; align-items: flex-start; }
+  .paste-row textarea { flex: 1; font-family: monospace; font-size: 12px; padding: 8px; border: 1px solid #aaa; border-radius: 4px; resize: vertical; margin-bottom: 0; }
+  .btn-fill { background: #008533; color: #fff; border: none; border-radius: 4px; padding: 9px 16px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; align-self: stretch; }
+  .paste-status { font-size: 11px; margin-top: 5px; color: #555; }
+
+  /* ── SLIP PREVIEW ── */
+  .slip-preview-wrap { margin-top: 18px; display: none; }
+  .slip-header-bar { background: #333; color: #fff; padding: 8px 14px; font-size: 13px; font-weight: bold; border-radius: 4px 4px 0 0; display: flex; justify-content: space-between; align-items: center; }
+  .btn-print-slip { background: #008533; color: #fff; border: none; border-radius: 4px; padding: 5px 14px; font-size: 13px; cursor: pointer; font-weight: bold; }
+  .slip-paper { background: #fff; border: 1px solid #ccc; border-top: none; padding: 16px; font-family: Arial, sans-serif; }
+  .slip-logo-row { background: #008533; color: #fff; text-align: center; padding: 8px; margin-bottom: 12px; }
+  .slip-logo-row .co-name { font-size: 20px; font-weight: bold; letter-spacing: 3px; }
+  .slip-logo-row .tagline { font-size: 9px; }
+  .slip-title { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 6px; }
+  .slip-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 10px; font-size: 12px; }
+  .slip-meta .key { font-weight: bold; color: #555; }
+  .slip-barcode-area { text-align: center; margin: 10px 0; }
+  .slip-barcode-area svg { max-width: 100%; }
+  .slip-id-text { font-size: 10px; color: #555; text-align: center; }
+  .slip-instruction { text-align: center; font-size: 10px; background: #fffce0; border: 1px solid #e0d000; padding: 4px; margin-top: 6px; }
+
+  /* ── SCAN PANEL ── */
+  .scan-status { border-radius: 6px; padding: 14px 18px; margin-bottom: 16px; font-weight: bold; font-size: 14px; text-align: center; }
+  .scan-status.idle   { background: #f5f5f5; border: 2px solid #ccc; color: #888; }
+  .scan-status.open   { background: #e8f5e9; border: 2px solid #008533; color: #005a22; }
+  .scan-status.closed { background: #fce4ec; border: 2px solid #c0392b; color: #7b0000; }
+
+  .scan-input-area { display: flex; gap: 10px; margin-bottom: 16px; }
+  .scan-input-area input { flex: 1; font-size: 16px; font-family: monospace; margin-bottom: 0; }
+  .btn-scan { background: #1565c0; color: #fff; border: none; border-radius: 5px; padding: 10px 20px; font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+
+  .scan-log { background: #1a1a1a; color: #00ff88; font-family: monospace; font-size: 12px; padding: 10px; border-radius: 4px; height: 140px; overflow-y: auto; margin-bottom: 16px; }
+  .scan-log .log-err  { color: #ff6b6b; }
+  .scan-log .log-warn { color: #ffd700; }
+  .scan-log .log-ok   { color: #00ff88; }
+
+  .pallet-manifest { border: 1px solid #ccc; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+  .manifest-header { background: #333; color: #fff; padding: 7px 12px; font-size: 12px; font-weight: bold; display: flex; justify-content: space-between; }
+  .manifest-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .manifest-table th { background: #f0f0f0; padding: 5px 10px; text-align: left; font-size: 11px; border-bottom: 2px solid #ccc; }
+  .manifest-table td { padding: 5px 10px; border-bottom: 1px solid #eee; font-family: monospace; }
+  .manifest-table tr:last-child td { border-bottom: none; }
+
+  /* ── PRINT ── */
+  #print-manifest { display: none; }
+  @media print {
+    body { background: #fff; padding: 0; font-size: 11px; }
+    .page-header, .main-card { display: none !important; }
+    #print-manifest { display: block !important; }
+  }
+  .manifest-copy { page-break-after: always; border: 4px solid #000; padding: 14px; max-width: 680px; margin: 0 auto 20px auto; font-family: Arial, sans-serif; }
+  .manifest-copy:last-child { page-break-after: avoid; }
+  .mc-logo { background: #008533; color: #fff; text-align: center; padding: 8px; margin-bottom: 10px; }
+  .mc-logo .co { font-size: 22px; font-weight: bold; letter-spacing: 3px; }
+  .mc-logo .tl { font-size: 9px; }
+  .mc-title { text-align: center; font-size: 15px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 8px; letter-spacing: 1px; }
+  .mc-copy-label { text-align: right; font-size: 10px; color: #888; font-weight: bold; margin-bottom: 6px; }
+  .mc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; margin-bottom: 8px; font-size: 11px; }
+  .mc-meta .k { font-weight: bold; color: #444; }
+  .mc-meta .v { font-weight: bold; }
+  .mc-barcode { text-align: center; margin: 8px 0; }
+  .mc-barcode svg { max-width: 100%; }
+  .mc-barcode-id { font-size: 9px; color: #555; text-align: center; }
+  .mc-sku-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px; }
+  .mc-sku-table th { background: #333; color: #fff; padding: 4px 8px; text-align: left; }
+  .mc-sku-table td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
+  .mc-sku-table tr.sku-group-header td { background: #e8e8e8; font-weight: bold; border-top: 2px solid #333; }
+  .mc-sku-table tr.pallet-row td { font-family: monospace; font-size: 10px; padding-left: 18px; }
+  .mc-sku-table tr.sku-total-row td { font-weight: bold; background: #f5fff5; border-top: 1px solid #999; border-bottom: 2px solid #333; }
+  .mc-grand-total { border: 3px solid #000; text-align: center; padding: 6px; margin-top: 8px; }
+  .mc-grand-total .gt-num { font-size: 28px; font-weight: bold; }
+  .mc-grand-total .gt-lbl { font-size: 9px; text-transform: uppercase; color: #555; }
+  .mc-pallet-count { text-align: center; font-size: 12px; font-weight: bold; margin-top: 6px; color: #333; }
+  .mc-sig { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .mc-sig .sig-field { border-bottom: 1px solid #000; padding-bottom: 18px; font-size: 9px; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>MASTER PACKING SLIP</h1>
+  <span class="nl-badge">⊘ NOT LOGGING</span>
+</div>
+
+<div class="main-card">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="generate" onclick="showTab('generate',event)">Generate Slip</button>
+    <button class="tab-btn" data-tab="scan" onclick="showTab('scan',event)">Scan / Load Trailer</button>
+  </div>
+
+  <!-- ── TAB 1: GENERATE ── -->
+  <div class="tab-panel active" id="tab-generate">
+
+    <div class="paste-zone">
+      <label>Paste Row from Schedule</label>
+      <div class="paste-row">
+        <textarea id="paste-input" rows="2" placeholder="Paste tab-delimited row here — fields will auto-fill below"></textarea>
+        <button class="btn-fill" onclick="parsePasteRow()">⬇ Fill Fields</button>
+      </div>
+      <div class="paste-status" id="paste-status"></div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>BOL / Slip Number</label>
+        <input type="text" id="bol-num">
+      </div>
+      <div class="form-group">
+        <label>Destination DC</label>
+        <select id="slip-dest">
+          <option value="DALLAS DC">DALLAS DC</option>
+          <option value="ORLANDO DC">ORLANDO DC</option>
+          <option value="ELGIN DC">ELGIN DC</option>
+          <option value="OTHER">OTHER</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Carrier</label>
+        <input type="text" id="carrier">
+      </div>
+      <div class="form-group">
+        <label>Trailer #</label>
+        <input type="text" id="trailer-num">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ship Date</label>
+        <input type="date" id="ship-date">
+      </div>
+      <div class="form-group">
+        <label>Prepared By</label>
+        <input type="text" id="prepared-by">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn-primary" onclick="generateSlip()">Generate Packing Slip</button>
+      <button class="btn-secondary" onclick="clearSlipForm()">Clear</button>
+    </div>
+
+    <div class="slip-preview-wrap" id="slip-preview-wrap">
+      <div class="slip-header-bar">
+        <span>Packing Slip Preview</span>
+        <button class="btn-print-slip" onclick="printSlipOnly()">🖨 Print Slip</button>
+      </div>
+      <div class="slip-paper" id="slip-paper">
+        <div class="slip-logo-row">
+          <div class="co-name">FILTERBUY</div>
+          <div class="tagline">BETTER AIR FOR ALL</div>
+        </div>
+        <div class="slip-title">MASTER PACKING SLIP</div>
+        <div class="slip-meta" id="slip-meta"></div>
+        <div class="slip-barcode-area">
+          <svg id="slip-barcode"></svg>
+          <div class="slip-id-text" id="slip-id-text"></div>
+        </div>
+        <div class="slip-instruction">SCAN TO OPEN TRAILER → SCAN PALLETS → SCAN AGAIN TO CLOSE &amp; PRINT MANIFEST</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 2: SCAN ── -->
+  <div class="tab-panel" id="tab-scan">
+
+    <div class="scan-status idle" id="scan-status">
+      ○ NO ACTIVE SESSION — Scan a Packing Slip barcode to open a trailer
+    </div>
+
+    <div class="scan-input-area">
+      <input type="text" id="scan-input" placeholder="Scan barcode here…" onkeydown="if(event.key==='Enter') processScan()">
+      <button class="btn-scan" onclick="processScan()">Process</button>
+    </div>
+
+    <div class="scan-log" id="scan-log">
+      <div class="log-ok">// Ready. Scan a Packing Slip barcode to begin.</div>
+    </div>
+
+    <div class="pallet-manifest" id="pallet-manifest-wrap" style="display:none;">
+      <div class="manifest-header">
+        <span>Loaded Pallets</span>
+        <span id="manifest-pallet-count">0 pallets</span>
+      </div>
+      <table class="manifest-table">
+        <thead>
+          <tr>
+            <th>Pallet ID</th>
+            <th>Destination</th>
+            <th>SKUs</th>
+            <th>Total Qty</th>
+          </tr>
+        </thead>
+        <tbody id="manifest-tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="session-controls" style="display:none;">
+      <button class="btn-secondary" onclick="clearSession()">Cancel Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT-ONLY AREA -->
+<div id="print-manifest"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIG — paste Web App URL here after deploying
+// DistributionOnly_WebApp.gs to Google Apps Script
+// ══════════════════════════════════════════════════
+const SHEETS_WEB_APP_URL = '';
+
+// ── TAB SWITCHING ──
+function showTab(id, evt) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (evt && evt.target) {
+    evt.target.classList.add('active');
+  } else {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      if (b.dataset.tab === id) b.classList.add('active');
+    });
   }
 }
 
-// Allow GET for connectivity test (open Web App URL in browser to confirm it's live)
-function doGet(e) {
-  return ContentService
-    .createTextOutput(JSON.stringify({ status: 'ok', message: 'BOL Logger is live.' }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+// ── PASTE AUTOFILL ──
+// Column order from schedule paste:
+// 0=DockType  1=Destination  2=Carrier  3=BOL#  4=Trailer#  5=ShipDate  6=DayOfWeek  7=empty  8=ReturnDay
+function parsePasteRow() {
+  const raw    = document.getElementById('paste-input').value;
+  const status = document.getElementById('paste-status');
+  if (!raw.trim()) { status.textContent = 'Nothing to parse.'; return; }
 
-function appendBolRecord(record) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-
-  // Determine which tab to write to
-  const tabName = TAB_MAP[record.dest] || 'OTHER';
-  let sheet = ss.getSheetByName(tabName);
-
-  // Create tab if it doesn't exist yet
-  if (!sheet) {
-    sheet = ss.insertSheet(tabName);
+  const parts = raw.split('\t').map(s => s.trim());
+  if (parts.length < 5) {
+    status.innerHTML = '<span style="color:#c0392b;">⚠ Could not parse — expected tab-delimited row with at least 5 columns.</span>';
+    return;
   }
 
-  // Write headers if sheet is empty
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(HEADERS);
+  const destRaw = parts[1] || '';
+  const carrier = parts[2] || '';
+  const bol     = parts[3] || '';
+  const trailer = parts[4] || '';
+  const dateRaw = parts[5] || '';
 
-    // Style header row
-    const headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
-    headerRange.setBackground('#008533');
-    headerRange.setFontColor('#ffffff');
-    headerRange.setFontWeight('bold');
-    sheet.setFrozenRows(1);
-
-    // Set column widths
-    sheet.setColumnWidth(1, 140);  // Closed At
-    sheet.setColumnWidth(2, 120);  // BOL #
-    sheet.setColumnWidth(3, 180);  // Slip ID
-    sheet.setColumnWidth(4, 100);  // Destination
-    sheet.setColumnWidth(5, 100);  // Carrier
-    sheet.setColumnWidth(6, 80);   // Trailer #
-    sheet.setColumnWidth(7, 90);   // Ship Date
-    sheet.setColumnWidth(8, 80);   // Pallet Count
-    sheet.setColumnWidth(9, 80);   // Total Pieces
-    sheet.setColumnWidth(10, 260); // Pallet IDs
-    sheet.setColumnWidth(11, 320); // SKU Summary
+  // Map destination text to DC option value
+  const destMap = { 'elgin': 'ELGIN DC', 'dallas': 'DALLAS DC', 'orlando': 'ORLANDO DC' };
+  let destVal = 'OTHER';
+  const destLower = destRaw.toLowerCase();
+  for (const [key, val] of Object.entries(destMap)) {
+    if (destLower.includes(key)) { destVal = val; break; }
   }
 
-  // Build compact pallet ID list
-  const palletIds = (record.pallets || []).map(p => p.id).join(', ');
-
-  // Build SKU summary: aggregate qty across all pallets per SKU
-  const skuTotals = {};
-  for (const pallet of (record.pallets || [])) {
-    for (const s of (pallet.skus || [])) {
-      skuTotals[s.sku] = (skuTotals[s.sku] || 0) + s.qty;
+  // Parse ship date to YYYY-MM-DD for <input type="date">
+  let shipDateVal = '';
+  if (dateRaw) {
+    const d = new Date(dateRaw);
+    if (!isNaN(d)) {
+      const y  = d.getFullYear();
+      const mo = String(d.getMonth()+1).padStart(2,'0');
+      const dy = String(d.getDate()).padStart(2,'0');
+      shipDateVal = `${y}-${mo}-${dy}`;
     }
   }
-  const skuSummary = Object.entries(skuTotals)
-    .map(([sku, qty]) => `${sku}×${qty}`)
-    .join(' / ');
 
-  // Format closed timestamp
-  const closedAt = record.closedAt
-    ? new Date(record.closedAt).toLocaleString('en-US', { timeZone: 'America/Chicago' })
-    : '';
+  document.getElementById('bol-num').value      = bol.toUpperCase();
+  document.getElementById('carrier').value      = carrier;
+  document.getElementById('trailer-num').value  = trailer;
+  document.getElementById('ship-date').value    = shipDateVal;
 
-  // Append row
-  sheet.appendRow([
-    closedAt,
-    record.bol       || '',
-    record.slipId    || '',
-    record.dest      || '',
-    record.carrier   || '',
-    record.trailer   || '',
-    record.shipDate  || '',
-    record.palletCount  || 0,
-    record.totalPieces  || 0,
-    palletIds,
-    skuSummary
-  ]);
+  const destSelect = document.getElementById('slip-dest');
+  for (const opt of destSelect.options) {
+    if (opt.value === destVal) { opt.selected = true; break; }
+  }
 
-  // Alternate row shading for readability
-  const lastRow = sheet.getLastRow();
-  if (lastRow > 1 && lastRow % 2 === 0) {
-    sheet.getRange(lastRow, 1, 1, HEADERS.length).setBackground('#f0f7f0');
+  const filled = [
+    bol         ? `BOL: ${bol}`         : null,
+    destVal     ? `Dest: ${destVal}`    : null,
+    carrier     ? `Carrier: ${carrier}` : null,
+    trailer     ? `Trailer: ${trailer}` : null,
+    shipDateVal ? `Date: ${dateRaw}`    : null,
+  ].filter(Boolean).join(' · ');
+
+  status.innerHTML = `<span style="color:#008533;">✓ Filled — ${filled}</span>`;
+  document.getElementById('paste-input').value = '';
+}
+
+// ── SLIP GENERATION ──
+let currentSlipId = null;
+
+function generateSlip() {
+  const bol      = document.getElementById('bol-num').value.trim().toUpperCase();
+  const dest     = document.getElementById('slip-dest').value;
+  const carrier  = document.getElementById('carrier').value.trim();
+  const trailer  = document.getElementById('trailer-num').value.trim().toUpperCase();
+  const shipDate = document.getElementById('ship-date').value;
+  const prepBy   = document.getElementById('prepared-by').value.trim();
+
+  if (!bol) { alert('Enter a BOL / Slip Number.'); return; }
+
+  // Build unique slip ID: PS-{BOL}-{MMDDYY}{HHMM}
+  const now  = new Date();
+  const mm   = String(now.getMonth()+1).padStart(2,'0');
+  const dd   = String(now.getDate()).padStart(2,'0');
+  const yy   = String(now.getFullYear()).slice(-2);
+  const hhmm = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
+  const slipId = `PS-${bol}-${mm}${dd}${yy}${hhmm}`;
+  currentSlipId = slipId;
+
+  const shipDateDisplay = shipDate ? formatDateDisplay(shipDate) : '—';
+
+  // Populate slip preview
+  document.getElementById('slip-meta').innerHTML = `
+    <span class="key">BOL #</span>        <span>${bol}</span>
+    <span class="key">Destination</span>  <span>${dest}</span>
+    <span class="key">Carrier</span>      <span>${carrier || '—'}</span>
+    <span class="key">Trailer #</span>    <span>${trailer || '—'}</span>
+    <span class="key">Ship Date</span>    <span>${shipDateDisplay}</span>
+    <span class="key">Prepared By</span>  <span>${prepBy || '—'}</span>
+  `;
+  document.getElementById('slip-id-text').textContent = slipId;
+
+  JsBarcode('#slip-barcode', slipId, {
+    format: 'CODE128', width: 2, height: 56, displayValue: false, margin: 6
+  });
+
+  document.getElementById('slip-preview-wrap').style.display = 'block';
+
+  // Save slip data to localStorage so scan session can look it up
+  const slipData = { slipId, bol, dest, carrier, trailer, shipDate, shipDateDisplay, prepBy };
+  localStorage.setItem('fb_slip_nl_' + slipId, JSON.stringify(slipData));
+
+  document.getElementById('slip-preview-wrap').scrollIntoView({ behavior: 'smooth' });
+
+  // Auto-print slip, then switch to Scan tab
+  setTimeout(() => printSlipOnly(), 300);
+}
+
+function formatDateDisplay(rawDate) {
+  const d    = new Date(rawDate + 'T00:00:00');
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const mm   = String(d.getMonth()+1).padStart(2,'0');
+  const dd   = String(d.getDate()).padStart(2,'0');
+  const yy   = String(d.getFullYear()).slice(-2);
+  return `${days[d.getDay()]}  ${mm}-${dd}-${yy}`;
+}
+
+function clearSlipForm() {
+  ['bol-num','carrier','trailer-num','prepared-by'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ship-date').value = '';
+  document.getElementById('slip-preview-wrap').style.display = 'none';
+  currentSlipId = null;
+}
+
+function printSlipOnly() {
+  const slipHTML = document.getElementById('slip-paper').outerHTML;
+  document.getElementById('print-manifest').innerHTML =
+    `<div style="max-width:680px;margin:0 auto;font-family:Arial,sans-serif;">${slipHTML}</div>`;
+  window.print();
+  document.getElementById('print-manifest').innerHTML = '';
+  // Auto-switch to Scan tab after print dialog closes
+  setTimeout(() => showTab('scan', null), 400);
+}
+
+// ── SCAN SESSION STATE ──
+let session = JSON.parse(sessionStorage.getItem('fb_scan_session_nl') || 'null');
+
+function saveSession() {
+  sessionStorage.setItem('fb_scan_session_nl', JSON.stringify(session));
+}
+
+function restoreUI() {
+  if (!session) return;
+  updateStatusUI();
+  renderManifest();
+}
+
+function log(msg, type='ok') {
+  const logEl = document.getElementById('scan-log');
+  const div   = document.createElement('div');
+  div.className   = 'log-' + type;
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+// ── SCAN PROCESSING ──
+function processScan() {
+  const input = document.getElementById('scan-input');
+  const raw   = input.value.trim();
+  input.value = '';
+  if (!raw) return;
+
+  if (raw.startsWith('PS-'))      { handleSlipScan(raw);   return; }
+  if (raw.startsWith('FB-'))      { handlePalletScan(raw); return; }
+  log(`Unknown barcode format: ${raw}`, 'err');
+}
+
+function handleSlipScan(slipId) {
+  // ── OPEN ──
+  if (!session) {
+    const slipData = JSON.parse(localStorage.getItem('fb_slip_nl_' + slipId) || 'null');
+    if (!slipData) {
+      log(`Slip ID ${slipId} not found. Generate the slip first.`, 'err');
+      return;
+    }
+    session = { slipId, slipData, pallets: [], openedAt: new Date().toISOString(), status: 'open' };
+    saveSession();
+    log(`✓ TRAILER OPENED — ${slipId}`, 'ok');
+    log(`  Dest: ${slipData.dest} | Trailer: ${slipData.trailer || '—'}`, 'ok');
+    log(`  Scan pallet barcodes to load. Scan slip again to CLOSE.`, 'warn');
+    updateStatusUI();
+    return;
+  }
+
+  // ── CLOSE ──
+  if (session.slipId === slipId && session.status === 'open') {
+    if (session.pallets.length === 0) {
+      log(`No pallets scanned yet. Add at least one pallet before closing.`, 'err');
+      return;
+    }
+    session.status   = 'closed';
+    session.closedAt = new Date().toISOString();
+    saveSession();
+    commitBolRecord(session);
+    log(`✓ TRAILER CLOSED — ${session.pallets.length} pallets on manifest`, 'ok');
+    log(`  Record saved: BOL# ${session.slipData.bol}`, 'ok');
+    log(`  Preparing 3-copy manifest for print...`, 'warn');
+    updateStatusUI();
+    setTimeout(() => triggerManifestPrint(), 400);
+    return;
+  }
+
+  // ── REPRINT if already closed ──
+  if (session.slipId === slipId && session.status === 'closed') {
+    log(`Session already closed — reprinting manifest.`, 'warn');
+    triggerManifestPrint();
+    return;
+  }
+
+  // ── DIFFERENT SLIP ──
+  if (session.slipId !== slipId) {
+    log(`Different slip scanned (${slipId}). Cancel current session first.`, 'err');
+    return;
   }
 }
+
+function handlePalletScan(palletId) {
+  if (!session || session.status !== 'open') {
+    log(`No open trailer session. Scan a Packing Slip first.`, 'err');
+    return;
+  }
+  if (session.pallets.find(p => p.id === palletId)) {
+    log(`Pallet ${palletId} already on manifest.`, 'warn');
+    return;
+  }
+
+  const staged = JSON.parse(localStorage.getItem('fb_staged_pallets_nl') || '[]');
+  const pallet = staged.find(p => p.id === palletId);
+
+  if (!pallet) {
+    log(`Pallet ${palletId} not in staged list — added as UNKNOWN.`, 'warn');
+    session.pallets.push({ id: palletId, dest: '—', skus: [], totalQty: 0, merv: '—', unknown: true });
+  } else {
+    session.pallets.push(pallet);
+    log(`✓ Pallet ${palletId} added — ${pallet.skus.map(s => s.sku + '×' + s.qty).join(', ')}`, 'ok');
+  }
+
+  saveSession();
+  renderManifest();
+}
+
+// ── STATUS UI ──
+function updateStatusUI() {
+  const statusEl = document.getElementById('scan-status');
+  const controls = document.getElementById('session-controls');
+
+  if (!session) {
+    statusEl.className   = 'scan-status idle';
+    statusEl.textContent = '○ NO ACTIVE SESSION — Scan a Packing Slip barcode to open a trailer';
+    controls.style.display = 'none';
+    document.getElementById('pallet-manifest-wrap').style.display = 'none';
+    return;
+  }
+
+  controls.style.display = 'block';
+
+  if (session.status === 'open') {
+    statusEl.className = 'scan-status open';
+    statusEl.innerHTML = `● TRAILER OPEN — ${session.slipData.dest} | ${session.slipData.trailer || 'No Trailer #'} | ${session.pallets.length} pallet(s) scanned
+      <br><small style="font-weight:normal;">Scan pallets to add · Scan slip barcode again to CLOSE &amp; PRINT MANIFEST</small>`;
+    document.getElementById('pallet-manifest-wrap').style.display = 'block';
+  } else {
+    statusEl.className = 'scan-status closed';
+    statusEl.innerHTML = `■ TRAILER CLOSED — ${session.slipData.dest} | ${session.pallets.length} pallets
+      &nbsp;<button onclick="triggerManifestPrint()" style="background:#c0392b;color:#fff;border:none;border-radius:3px;padding:3px 10px;cursor:pointer;font-size:12px;">🖨 Reprint Manifest</button>
+      &nbsp;<button onclick="startNewSession()" style="background:#555;color:#fff;border:none;border-radius:3px;padding:3px 10px;cursor:pointer;font-size:12px;">New Session</button>`;
+    document.getElementById('pallet-manifest-wrap').style.display = 'block';
+  }
+}
+
+function renderManifest() {
+  if (!session) return;
+  const tbody = document.getElementById('manifest-tbody');
+  const count = document.getElementById('manifest-pallet-count');
+  count.textContent = `${session.pallets.length} pallet${session.pallets.length !== 1 ? 's' : ''}`;
+  tbody.innerHTML = session.pallets.map(p => `
+    <tr>
+      <td>${p.id}</td>
+      <td>${p.dest}</td>
+      <td>${(p.skus || []).map(s => `${s.sku} ×${s.qty}`).join('<br>') || '—'}</td>
+      <td style="font-weight:bold;">${p.totalQty || 0}</td>
+    </tr>
+  `).join('');
+}
+
+function clearSession() {
+  if (!confirm('Cancel current scan session? This cannot be undone.')) return;
+  session = null;
+  sessionStorage.removeItem('fb_scan_session_nl');
+  log('Session cancelled.', 'warn');
+  updateStatusUI();
+  document.getElementById('manifest-tbody').innerHTML = '';
+  document.getElementById('manifest-pallet-count').textContent = '0 pallets';
+}
+
+function startNewSession() {
+  session = null;
+  sessionStorage.removeItem('fb_scan_session_nl');
+  updateStatusUI();
+  document.getElementById('manifest-tbody').innerHTML = '';
+  document.getElementById('manifest-pallet-count').textContent = '0 pallets';
+  log('Ready for new session. Scan a Packing Slip barcode to begin.', 'ok');
+}
+
+// ── 3-COPY MANIFEST PRINT ──
+function triggerManifestPrint() {
+  if (!session || session.pallets.length === 0) return;
+
+  // Group all pallets by SKU
+  const skuMap = {};
+  for (const pallet of session.pallets) {
+    for (const s of (pallet.skus || [])) {
+      if (!skuMap[s.sku]) skuMap[s.sku] = [];
+      skuMap[s.sku].push({ palletId: pallet.id, qty: s.qty });
+    }
+  }
+
+  const sd          = session.slipData;
+  const totalPieces = session.pallets.reduce((sum, p) => sum + (p.totalQty || 0), 0);
+  const copies      = ['CARRIER COPY', 'DOCK COPY', 'FILE COPY'];
+
+  let html = '';
+  for (const copyLabel of copies) {
+    const tableRows = Object.entries(skuMap).map(([sku, entries]) => {
+      const skuTotal   = entries.reduce((s, e) => s + e.qty, 0);
+      const palletRows = entries.map(e => `
+        <tr class="pallet-row">
+          <td colspan="2" style="padding-left:18px;font-size:10px;color:#555;">${e.palletId}</td>
+          <td style="text-align:right;font-size:10px;">${e.qty}</td>
+        </tr>`).join('');
+      return `
+        <tr class="sku-group-header">
+          <td colspan="2">${sku}</td><td></td>
+        </tr>
+        ${palletRows}
+        <tr class="sku-total-row">
+          <td colspan="2" style="text-align:right;font-size:10px;">SKU TOTAL</td>
+          <td style="text-align:right;">${skuTotal}</td>
+        </tr>`;
+    }).join('');
+
+    const bcId = 'mc-bc-' + copyLabel.replace(/ /g, '_');
+    html += `
+      <div class="manifest-copy">
+        <div class="mc-logo">
+          <div class="co">FILTERBUY</div>
+          <div class="tl">BETTER AIR FOR ALL</div>
+        </div>
+        <div class="mc-copy-label">${copyLabel}</div>
+        <div class="mc-title">TRAILER MANIFEST</div>
+        <div class="mc-meta">
+          <span class="k">BOL #</span>        <span class="v">${sd.bol}</span>
+          <span class="k">Destination</span>  <span class="v">${sd.dest}</span>
+          <span class="k">Carrier</span>      <span class="v">${sd.carrier || '—'}</span>
+          <span class="k">Trailer #</span>    <span class="v">${sd.trailer || '—'}</span>
+          <span class="k">Ship Date</span>    <span class="v">${sd.shipDateDisplay || sd.shipDate || '—'}</span>
+          <span class="k">Prepared By</span>  <span class="v">${sd.prepBy || '—'}</span>
+          <span class="k">Closed</span>       <span class="v">${new Date(session.closedAt).toLocaleString()}</span>
+          <span class="k">Slip ID</span>      <span class="v" style="font-size:9px;font-family:monospace;">${session.slipId}</span>
+        </div>
+        <div class="mc-barcode">
+          <svg id="${bcId}"></svg>
+          <div class="mc-barcode-id">${session.slipId}</div>
+        </div>
+        <table class="mc-sku-table">
+          <thead><tr><th>SKU</th><th>Pallet</th><th style="text-align:right;">Qty</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+        <div class="mc-grand-total">
+          <div class="gt-num">${totalPieces}</div>
+          <div class="gt-lbl">Total Pieces</div>
+        </div>
+        <div class="mc-pallet-count">${session.pallets.length} Pallet${session.pallets.length !== 1 ? 's' : ''} Total</div>
+        <div class="mc-sig">
+          <div class="sig-field">Loaded By: ___________________</div>
+          <div class="sig-field">Received By: ___________________</div>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('print-manifest').innerHTML = html;
+
+  requestAnimationFrame(() => {
+    copies.forEach(c => {
+      try {
+        JsBarcode('#mc-bc-' + c.replace(/ /g,'_'), session.slipId, {
+          format: 'CODE128', width: 2, height: 40, displayValue: false, margin: 4
+        });
+      } catch(e) {}
+    });
+    setTimeout(() => window.print(), 300);
+  });
+}
+
+// ── BOL RECORD — localStorage + Google Sheets on close ──
+function commitBolRecord(sess) {
+  const records = JSON.parse(localStorage.getItem('fb_bol_records') || '[]');
+  // Prevent duplicate commits
+  if (records.find(r => r.slipId === sess.slipId)) return;
+
+  const sd = sess.slipData;
+  const record = {
+    slipId:          sess.slipId,
+    bol:             sd.bol,
+    dest:            sd.dest,
+    carrier:         sd.carrier         || '',
+    trailer:         sd.trailer         || '',
+    shipDate:        sd.shipDate        || '',
+    shipDateDisplay: sd.shipDateDisplay || '',
+    prepBy:          sd.prepBy          || '',
+    openedAt:        sess.openedAt,
+    closedAt:        sess.closedAt,
+    palletCount:     sess.pallets.length,
+    totalPieces:     sess.pallets.reduce((s, p) => s + (p.totalQty || 0), 0),
+    pallets:         sess.pallets.map(p => ({
+      id:              p.id,
+      dest:            p.dest,
+      merv:            p.merv            || '',
+      mfg:             p.mfg             || '',
+      skus:            p.skus            || [],
+      totalQty:        p.totalQty        || 0,
+      loadDate:        p.loadDate        || '',
+      loadDateDisplay: p.loadDateDisplay || '',
+      unknown:         p.unknown         || false
+    })),
+    locked: true
+  };
+
+  // 1. Always save locally
+  records.push(record);
+  localStorage.setItem('fb_bol_records', JSON.stringify(records));
+
+  // 2. POST to Google Sheets if Web App URL is configured
+  if (SHEETS_WEB_APP_URL) {
+    postToSheets(record);
+  }
+}
+
+function postToSheets(record) {
+  fetch(SHEETS_WEB_APP_URL, {
+    method:  'POST',
+    mode:    'no-cors', // required for Apps Script Web App from browser
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(record)
+  })
+  .then(() => {
+    log('✓ Record written to Google Sheets.', 'ok');
+  })
+  .catch(err => {
+    log(`⚠ Sheets write failed (saved locally): ${err.message}`, 'warn');
+  });
+}
+
+// ── INIT ──
+restoreUI();
+</script>
+</body>
+</html>
