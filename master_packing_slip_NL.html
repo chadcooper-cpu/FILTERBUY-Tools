@@ -1,675 +1,128 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Master Packing Slip — NOT LOGGING</title>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: #f0f0f0; padding: 20px; }
+// ============================================================
+// Filterbuy — Distribution Only BOL Logger
+// Deploy as Web App:
+//   Execute as: Me (chad.cooper@filterbuy.com)
+//   Who has access: Anyone  (or Anyone within Filterbuy)
+// ============================================================
 
-  .page-header {
-    background: #008533; color: #fff; padding: 12px 20px;
-    border-radius: 6px 6px 0 0;
-    display: flex; align-items: center; justify-content: space-between;
-    max-width: 760px; margin: 0 auto;
-  }
-  .page-header h1 { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
-  .nl-badge {
-    background: #c0392b; color: #fff; font-size: 11px;
-    font-weight: bold; padding: 3px 8px; border-radius: 3px; letter-spacing: 1px;
-  }
+const SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzByASZsx_WhWqWOgHQVxcnrykUsB70C_uDiEalUwkVP6LV_uNljANUTIi4YBjJEk_C/exec';
 
-  .main-card {
-    background: #fff; border: 2px solid #008533; border-top: none;
-    border-radius: 0 0 6px 6px; padding: 20px;
-    max-width: 760px; margin: 0 auto 24px auto;
-  }
+const HEADERS = [
+  'Closed At',
+  'BOL #',
+  'Slip ID',
+  'Destination',
+  'Carrier',
+  'Trailer #',
+  'Ship Date',
+  'Pallet Count',
+  'Total Pieces',
+  'Pallet IDs',
+  'SKU Summary'
+];
 
-  /* ── TABS ── */
-  .tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 2px solid #008533; }
-  .tab-btn {
-    padding: 9px 22px; border: none; background: #eee; cursor: pointer;
-    font-size: 13px; font-weight: bold; border-radius: 4px 4px 0 0;
-    border: 1px solid #ccc; border-bottom: none; margin-right: 3px;
-    color: #555;
-  }
-  .tab-btn.active { background: #008533; color: #fff; border-color: #008533; }
-  .tab-panel { display: none; padding-top: 18px; }
-  .tab-panel.active { display: block; }
+// Tab name mapping — matches what the HTML tool sends as dest
+const TAB_MAP = {
+  'DALLAS DC':  'DALLAS DC',
+  'ORLANDO DC': 'ORLANDO DC',
+  'ELGIN DC':   'ELGIN DC',
+};
 
-  label { font-size: 11px; font-weight: bold; color: #444; text-transform: uppercase; display: block; margin-bottom: 4px; }
-  input, select { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 100%; margin-bottom: 12px; }
-  input:focus, select:focus { outline: none; border-color: #008533; }
-
-  .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
-  .form-group { flex: 1; min-width: 140px; }
-
-  .btn-primary {
-    background: #008533; color: #fff; border: none; border-radius: 5px;
-    padding: 11px 28px; font-size: 15px; font-weight: bold; cursor: pointer;
-  }
-  .btn-primary:hover { background: #006628; }
-  .btn-secondary {
-    background: #555; color: #fff; border: none; border-radius: 5px;
-    padding: 11px 20px; font-size: 14px; cursor: pointer;
-  }
-
-  /* ── SLIP PREVIEW ── */
-  .slip-preview-wrap { margin-top: 18px; display: none; }
-  .slip-header-bar {
-    background: #333; color: #fff; padding: 8px 14px; font-size: 13px;
-    font-weight: bold; border-radius: 4px 4px 0 0;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .btn-print-slip {
-    background: #008533; color: #fff; border: none; border-radius: 4px;
-    padding: 5px 14px; font-size: 13px; cursor: pointer; font-weight: bold;
-  }
-  .slip-paper {
-    background: #fff; border: 1px solid #ccc; border-top: none;
-    padding: 16px; font-family: Arial, sans-serif;
-  }
-  .slip-logo-row {
-    background: #008533; color: #fff; text-align: center;
-    padding: 8px; margin-bottom: 12px;
-  }
-  .slip-logo-row .co-name { font-size: 20px; font-weight: bold; letter-spacing: 3px; }
-  .slip-logo-row .tagline { font-size: 9px; }
-  .slip-title { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px; border-bottom: 2px solid #000; padding-bottom: 6px; }
-  .slip-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; margin-bottom: 10px; font-size: 12px; }
-  .slip-meta .key { font-weight: bold; color: #555; }
-  .slip-barcode-area { text-align: center; margin: 10px 0; }
-  .slip-barcode-area svg { max-width: 100%; }
-  .slip-id-text { font-size: 10px; color: #555; text-align: center; }
-  .slip-instruction { text-align: center; font-size: 10px; background: #fffce0; border: 1px solid #e0d000; padding: 4px; margin-top: 6px; }
-
-  /* ── SCAN PANEL ── */
-  .scan-status {
-    border-radius: 6px; padding: 14px 18px; margin-bottom: 16px;
-    font-weight: bold; font-size: 14px; text-align: center;
-  }
-  .scan-status.idle    { background: #f5f5f5; border: 2px solid #ccc; color: #888; }
-  .scan-status.open    { background: #e8f5e9; border: 2px solid #008533; color: #005a22; }
-  .scan-status.closed  { background: #fce4ec; border: 2px solid #c0392b; color: #7b0000; }
-
-  .scan-input-area { display: flex; gap: 10px; margin-bottom: 16px; }
-  .scan-input-area input { flex: 1; font-size: 16px; font-family: monospace; margin-bottom: 0; }
-  .btn-scan { background: #1565c0; color: #fff; border: none; border-radius: 5px; padding: 10px 20px; font-size: 14px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-
-  .scan-log {
-    background: #1a1a1a; color: #00ff88; font-family: monospace;
-    font-size: 12px; padding: 10px; border-radius: 4px; height: 140px;
-    overflow-y: auto; margin-bottom: 16px;
-  }
-  .scan-log .log-err { color: #ff6b6b; }
-  .scan-log .log-warn { color: #ffd700; }
-  .scan-log .log-ok { color: #00ff88; }
-
-  .pallet-manifest { border: 1px solid #ccc; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
-  .manifest-header {
-    background: #333; color: #fff; padding: 7px 12px; font-size: 12px;
-    font-weight: bold; display: flex; justify-content: space-between;
-  }
-  .manifest-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .manifest-table th { background: #f0f0f0; padding: 5px 10px; text-align: left; font-size: 11px; border-bottom: 2px solid #ccc; }
-  .manifest-table td { padding: 5px 10px; border-bottom: 1px solid #eee; font-family: monospace; }
-  .manifest-table tr:last-child td { border-bottom: none; }
-
-  /* ── PRINT MANIFEST (3 copies, triggered after close) ── */
-  #print-manifest { display: none; }
-
-  @media print {
-    body { background: #fff; padding: 0; font-size: 11px; }
-    .page-header, .main-card { display: none !important; }
-    #print-manifest { display: block !important; }
-  }
-
-  .manifest-copy {
-    page-break-after: always;
-    border: 4px solid #000;
-    padding: 14px;
-    max-width: 680px;
-    margin: 0 auto 20px auto;
-    font-family: Arial, sans-serif;
-  }
-  .manifest-copy:last-child { page-break-after: avoid; }
-  .mc-logo {
-    background: #008533; color: #fff; text-align: center;
-    padding: 8px; margin-bottom: 10px;
-  }
-  .mc-logo .co { font-size: 22px; font-weight: bold; letter-spacing: 3px; }
-  .mc-logo .tl { font-size: 9px; }
-  .mc-title { text-align: center; font-size: 15px; font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 8px; letter-spacing: 1px; }
-  .mc-copy-label { text-align: right; font-size: 10px; color: #888; font-weight: bold; margin-bottom: 6px; }
-  .mc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; margin-bottom: 8px; font-size: 11px; }
-  .mc-meta .k { font-weight: bold; color: #444; }
-  .mc-meta .v { font-weight: bold; }
-  .mc-barcode { text-align: center; margin: 8px 0; }
-  .mc-barcode svg { max-width: 100%; }
-  .mc-barcode-id { font-size: 9px; color: #555; text-align: center; }
-  .mc-sku-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 8px; }
-  .mc-sku-table th { background: #333; color: #fff; padding: 4px 8px; text-align: left; }
-  .mc-sku-table td { padding: 4px 8px; border-bottom: 1px solid #ddd; }
-  .mc-sku-table tr.sku-group-header td { background: #e8e8e8; font-weight: bold; border-top: 2px solid #333; }
-  .mc-sku-table tr.pallet-row td { font-family: monospace; font-size: 10px; padding-left: 18px; }
-  .mc-sku-table tr.sku-total-row td { font-weight: bold; background: #f5fff5; border-top: 1px solid #999; border-bottom: 2px solid #333; }
-  .mc-grand-total { border: 3px solid #000; text-align: center; padding: 6px; margin-top: 8px; }
-  .mc-grand-total .gt-num { font-size: 28px; font-weight: bold; }
-  .mc-grand-total .gt-lbl { font-size: 9px; text-transform: uppercase; color: #555; }
-  .mc-pallet-count { text-align: center; font-size: 12px; font-weight: bold; margin-top: 6px; color: #333; }
-  .mc-sig { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-  .mc-sig .sig-field { border-bottom: 1px solid #000; padding-bottom: 18px; font-size: 9px; color: #555; }
-</style>
-</head>
-<body>
-
-<!-- SCREEN CONTENT -->
-<div class="page-header">
-  <h1>MASTER PACKING SLIP</h1>
-  <span class="nl-badge">⊘ NOT LOGGING</span>
-</div>
-
-<div class="main-card">
-  <div class="tabs">
-    <button class="tab-btn active" onclick="showTab('generate')">Generate Slip</button>
-    <button class="tab-btn" onclick="showTab('scan')">Scan / Load Trailer</button>
-  </div>
-
-  <!-- ── TAB 1: GENERATE ── -->
-  <div class="tab-panel active" id="tab-generate">
-    <div class="form-row">
-      <div class="form-group">
-        <label>BOL / Slip Number</label>
-        <input type="text" id="bol-num" placeholder="e.g. TX-062526-001">
-      </div>
-      <div class="form-group">
-        <label>Destination DC</label>
-        <select id="slip-dest">
-          <option value="DALLAS DC">DALLAS DC</option>
-          <option value="ORLANDO DC">ORLANDO DC</option>
-          <option value="ELGIN DC">ELGIN DC</option>
-          <option value="OTHER">OTHER</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Carrier / Driver</label>
-        <input type="text" id="carrier" placeholder="Carrier name or driver">
-      </div>
-      <div class="form-group">
-        <label>Trailer #</label>
-        <input type="text" id="trailer-num" placeholder="e.g. FB001">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Ship Date</label>
-        <input type="date" id="ship-date">
-      </div>
-      <div class="form-group">
-        <label>Prepared By</label>
-        <input type="text" id="prepared-by" placeholder="Name">
-      </div>
-    </div>
-
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn-primary" onclick="generateSlip()">Generate Packing Slip</button>
-      <button class="btn-secondary" onclick="clearSlipForm()">Clear</button>
-    </div>
-
-    <div class="slip-preview-wrap" id="slip-preview-wrap">
-      <div class="slip-header-bar">
-        <span>Packing Slip Preview</span>
-        <button class="btn-print-slip" onclick="printSlipOnly()">🖨 Print Slip</button>
-      </div>
-      <div class="slip-paper">
-        <div class="slip-logo-row">
-          <div class="co-name">FILTERBUY</div>
-          <div class="tagline">BETTER AIR FOR ALL</div>
-        </div>
-        <div class="slip-title">MASTER PACKING SLIP</div>
-        <div class="slip-meta" id="slip-meta"></div>
-        <div class="slip-barcode-area">
-          <svg id="slip-barcode"></svg>
-          <div class="slip-id-text" id="slip-id-text"></div>
-        </div>
-        <div class="slip-instruction">SCAN TO OPEN TRAILER → SCAN PALLETS → SCAN AGAIN TO CLOSE &amp; PRINT MANIFEST</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── TAB 2: SCAN ── -->
-  <div class="tab-panel" id="tab-scan">
-    <div class="scan-status idle" id="scan-status">
-      ○ NO ACTIVE SESSION — Scan a Packing Slip barcode to open a trailer
-    </div>
-
-    <div class="scan-input-area">
-      <input type="text" id="scan-input" placeholder="Scan barcode here…" onkeydown="if(event.key==='Enter') processScan()">
-      <button class="btn-scan" onclick="processScan()">Process</button>
-    </div>
-
-    <div class="scan-log" id="scan-log">
-      <div class="log-ok">// Ready. Scan a Packing Slip barcode to begin.</div>
-    </div>
-
-    <div class="pallet-manifest" id="pallet-manifest-wrap" style="display:none;">
-      <div class="manifest-header">
-        <span>Loaded Pallets</span>
-        <span id="manifest-pallet-count">0 pallets</span>
-      </div>
-      <table class="manifest-table">
-        <thead>
-          <tr><th>Pallet ID</th><th>Destination</th><th>SKUs</th><th>Total Qty</th></tr>
-        </thead>
-        <tbody id="manifest-tbody"></tbody>
-      </table>
-    </div>
-
-    <div id="session-controls" style="display:none;">
-      <button class="btn-secondary" onclick="clearSession()" style="margin-right:8px;">Cancel Session</button>
-    </div>
-  </div>
-</div>
-
-<!-- PRINT-ONLY MANIFEST (3 COPIES) -->
-<div id="print-manifest"></div>
-
-<script>
-// ── TAB SWITCHING ──
-function showTab(id) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + id).classList.add('active');
-  event.target.classList.add('active');
-}
-
-// ── SLIP GENERATION ──
-let currentSlipId = null;
-
-function generateSlip() {
-  const bol = document.getElementById('bol-num').value.trim().toUpperCase();
-  const dest = document.getElementById('slip-dest').value;
-  const carrier = document.getElementById('carrier').value.trim();
-  const trailer = document.getElementById('trailer-num').value.trim().toUpperCase();
-  const shipDate = document.getElementById('ship-date').value;
-  const prepBy = document.getElementById('prepared-by').value.trim();
-
-  if (!bol) { alert('Enter a BOL / Slip Number.'); return; }
-
-  // Slip ID = PS- + BOL + timestamp suffix
-  const now = new Date();
-  const mm = String(now.getMonth()+1).padStart(2,'0');
-  const dd = String(now.getDate()).padStart(2,'0');
-  const yy = String(now.getFullYear()).slice(-2);
-  const hhmm = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
-  const slipId = `PS-${bol}-${mm}${dd}${yy}${hhmm}`;
-  currentSlipId = slipId;
-
-  // Format ship date display
-  let shipDateDisplay = shipDate ? formatDateDisplay(shipDate) : '—';
-
-  // Build meta grid
-  const meta = document.getElementById('slip-meta');
-  meta.innerHTML = `
-    <span class="key">BOL #</span><span>${bol}</span>
-    <span class="key">Destination</span><span>${dest}</span>
-    <span class="key">Carrier</span><span>${carrier || '—'}</span>
-    <span class="key">Trailer #</span><span>${trailer || '—'}</span>
-    <span class="key">Ship Date</span><span>${shipDateDisplay}</span>
-    <span class="key">Prepared By</span><span>${prepBy || '—'}</span>
-  `;
-
-  document.getElementById('slip-id-text').textContent = slipId;
-
-  JsBarcode('#slip-barcode', slipId, {
-    format: 'CODE128', width: 2, height: 56, displayValue: false, margin: 6
-  });
-
-  document.getElementById('slip-preview-wrap').style.display = 'block';
-
-  // Persist slip info to localStorage for scan session
-  const slipData = { slipId, bol, dest, carrier, trailer, shipDate, shipDateDisplay, prepBy };
-  localStorage.setItem('fb_slip_nl_' + slipId, JSON.stringify(slipData));
-
-  document.getElementById('slip-preview-wrap').scrollIntoView({ behavior: 'smooth' });
-}
-
-function formatDateDisplay(rawDate) {
-  const d = new Date(rawDate + 'T00:00:00');
-  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const dd2 = String(d.getDate()).padStart(2,'0');
-  const yy = String(d.getFullYear()).slice(-2);
-  return `${days[d.getDay()]}  ${mm}-${dd2}-${yy}`;
-}
-
-function clearSlipForm() {
-  ['bol-num','carrier','trailer-num','prepared-by'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('ship-date').value = '';
-  document.getElementById('slip-preview-wrap').style.display = 'none';
-  currentSlipId = null;
-}
-
-function printSlipOnly() {
-  // Temporarily show only the slip for printing
-  document.getElementById('print-manifest').innerHTML = buildSlipPrintHTML();
-  window.print();
-  document.getElementById('print-manifest').innerHTML = '';
-}
-
-function buildSlipPrintHTML() {
-  // Clone the slip paper section
-  const slip = document.querySelector('.slip-paper');
-  return `<div style="max-width:680px;margin:0 auto;font-family:Arial,sans-serif;">${slip.outerHTML}</div>`;
-}
-
-// ── SCAN SESSION STATE ──
-let session = JSON.parse(sessionStorage.getItem('fb_scan_session_nl') || 'null');
-
-function saveSession() {
-  sessionStorage.setItem('fb_scan_session_nl', JSON.stringify(session));
-}
-
-function restoreUI() {
-  if (!session) return;
-  updateStatusUI();
-  renderManifest();
-}
-
-function log(msg, type='ok') {
-  const logEl = document.getElementById('scan-log');
-  const div = document.createElement('div');
-  div.className = 'log-' + type;
-  const ts = new Date().toLocaleTimeString();
-  div.textContent = `[${ts}] ${msg}`;
-  logEl.appendChild(div);
-  logEl.scrollTop = logEl.scrollHeight;
-}
-
-function processScan() {
-  const input = document.getElementById('scan-input');
-  const raw = input.value.trim();
-  input.value = '';
-  if (!raw) return;
-
-  // Is this a Packing Slip barcode?
-  if (raw.startsWith('PS-')) {
-    handleSlipScan(raw);
-    return;
-  }
-
-  // Is this a Pallet barcode?
-  if (raw.startsWith('FB-')) {
-    handlePalletScan(raw);
-    return;
-  }
-
-  log(`Unknown barcode format: ${raw}`, 'err');
-}
-
-function handleSlipScan(slipId) {
-  if (!session) {
-    // OPEN TRAILER
-    const slipData = JSON.parse(localStorage.getItem('fb_slip_nl_' + slipId) || 'null');
-    if (!slipData) {
-      log(`Slip ID ${slipId} not found. Generate the slip first.`, 'err');
-      return;
-    }
-    session = { slipId, slipData, pallets: [], openedAt: new Date().toISOString(), status: 'open' };
-    saveSession();
-    log(`✓ TRAILER OPENED — Session started for ${slipId}`, 'ok');
-    log(`  Destination: ${slipData.dest} | Trailer: ${slipData.trailer || '—'}`, 'ok');
-    log(`  Scan pallet barcodes to add to manifest. Scan slip again to CLOSE.`, 'warn');
-    updateStatusUI();
-    showTab('scan');
-    return;
-  }
-
-  if (session.slipId === slipId && session.status === 'open') {
-    // CLOSE TRAILER
-    if (session.pallets.length === 0) {
-      log(`No pallets scanned yet. Add at least one pallet before closing.`, 'err');
-      return;
-    }
-    session.status = 'closed';
-    session.closedAt = new Date().toISOString();
-    saveSession();
-    commitBolRecord(session);
-    log(`✓ TRAILER CLOSED — ${session.pallets.length} pallets on manifest`, 'ok');
-    log(`  Record saved under BOL# ${session.slipData.bol}`, 'ok');
-    log(`  Preparing 3-copy manifest for print...`, 'warn');
-    updateStatusUI();
-    setTimeout(() => triggerManifestPrint(), 400);
-    return;
-  }
-
-  if (session.slipId !== slipId) {
-    log(`Different slip scanned (${slipId}). Close current session first.`, 'err');
-    return;
-  }
-
-  if (session.status === 'closed') {
-    log(`Session already closed. Reprint manifest or start new session.`, 'warn');
-    triggerManifestPrint();
-    return;
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    appendBolRecord(data);
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'ok' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
-function handlePalletScan(palletId) {
-  if (!session || session.status !== 'open') {
-    log(`No open trailer session. Scan a Packing Slip first.`, 'err');
-    return;
-  }
-
-  // Check duplicate
-  if (session.pallets.find(p => p.id === palletId)) {
-    log(`Pallet ${palletId} already on manifest.`, 'warn');
-    return;
-  }
-
-  // Look up pallet from staged pallets
-  const staged = JSON.parse(localStorage.getItem('fb_staged_pallets_nl') || '[]');
-  const pallet = staged.find(p => p.id === palletId);
-
-  if (!pallet) {
-    // Manual add with unknown pallet
-    log(`Pallet ${palletId} not found in staged pallets — added as UNKNOWN.`, 'warn');
-    session.pallets.push({ id: palletId, dest: '—', skus: [], totalQty: 0, merv: '—', unknown: true });
-  } else {
-    session.pallets.push(pallet);
-    log(`✓ Pallet ${palletId} added — ${pallet.skus.map(s=>s.sku+'×'+s.qty).join(', ')}`, 'ok');
-  }
-
-  saveSession();
-  renderManifest();
+// Allow GET for connectivity test (open Web App URL in browser to confirm it's live)
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'ok', message: 'BOL Logger is live.' }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-function updateStatusUI() {
-  const statusEl = document.getElementById('scan-status');
-  const controls = document.getElementById('session-controls');
+function appendBolRecord(record) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
 
-  if (!session) {
-    statusEl.className = 'scan-status idle';
-    statusEl.textContent = '○ NO ACTIVE SESSION — Scan a Packing Slip barcode to open a trailer';
-    controls.style.display = 'none';
-    document.getElementById('pallet-manifest-wrap').style.display = 'none';
-    return;
+  // Determine which tab to write to
+  const tabName = TAB_MAP[record.dest] || 'OTHER';
+  let sheet = ss.getSheetByName(tabName);
+
+  // Create tab if it doesn't exist yet
+  if (!sheet) {
+    sheet = ss.insertSheet(tabName);
   }
 
-  controls.style.display = 'block';
+  // Write headers if sheet is empty
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS);
 
-  if (session.status === 'open') {
-    statusEl.className = 'scan-status open';
-    statusEl.innerHTML = `● TRAILER OPEN — ${session.slipData.dest} | ${session.slipData.trailer || 'No Trailer #'} | ${session.pallets.length} pallet(s) scanned<br><small style="font-weight:normal;">Scan pallets to add · Scan slip again to CLOSE &amp; PRINT MANIFEST</small>`;
-    document.getElementById('pallet-manifest-wrap').style.display = 'block';
-  } else {
-    statusEl.className = 'scan-status closed';
-    statusEl.innerHTML = `■ TRAILER CLOSED — ${session.slipData.dest} | ${session.pallets.length} pallets | <button onclick="triggerManifestPrint()" style="background:#c0392b;color:#fff;border:none;border-radius:3px;padding:3px 10px;cursor:pointer;font-size:12px;">🖨 Reprint Manifest</button>`;
-    document.getElementById('pallet-manifest-wrap').style.display = 'block';
+    // Style header row
+    const headerRange = sheet.getRange(1, 1, 1, HEADERS.length);
+    headerRange.setBackground('#008533');
+    headerRange.setFontColor('#ffffff');
+    headerRange.setFontWeight('bold');
+    sheet.setFrozenRows(1);
+
+    // Set column widths
+    sheet.setColumnWidth(1, 140);  // Closed At
+    sheet.setColumnWidth(2, 120);  // BOL #
+    sheet.setColumnWidth(3, 180);  // Slip ID
+    sheet.setColumnWidth(4, 100);  // Destination
+    sheet.setColumnWidth(5, 100);  // Carrier
+    sheet.setColumnWidth(6, 80);   // Trailer #
+    sheet.setColumnWidth(7, 90);   // Ship Date
+    sheet.setColumnWidth(8, 80);   // Pallet Count
+    sheet.setColumnWidth(9, 80);   // Total Pieces
+    sheet.setColumnWidth(10, 260); // Pallet IDs
+    sheet.setColumnWidth(11, 320); // SKU Summary
   }
-}
 
-function renderManifest() {
-  if (!session) return;
-  const tbody = document.getElementById('manifest-tbody');
-  const count = document.getElementById('manifest-pallet-count');
-  count.textContent = `${session.pallets.length} pallet${session.pallets.length !== 1 ? 's' : ''}`;
-  tbody.innerHTML = session.pallets.map(p => `
-    <tr>
-      <td>${p.id}</td>
-      <td>${p.dest}</td>
-      <td>${p.skus.map(s=>`${s.sku} ×${s.qty}`).join('<br>') || '—'}</td>
-      <td style="font-weight:bold;">${p.totalQty}</td>
-    </tr>
-  `).join('');
-}
+  // Build compact pallet ID list
+  const palletIds = (record.pallets || []).map(p => p.id).join(', ');
 
-function clearSession() {
-  if (!confirm('Cancel current scan session? This cannot be undone.')) return;
-  session = null;
-  sessionStorage.removeItem('fb_scan_session_nl');
-  log('Session cleared.', 'warn');
-  updateStatusUI();
-  document.getElementById('manifest-tbody').innerHTML = '';
-  document.getElementById('manifest-pallet-count').textContent = '0 pallets';
-}
-
-// ── MANIFEST PRINT (3 COPIES) ──
-function triggerManifestPrint() {
-  if (!session || session.pallets.length === 0) return;
-
-  // Group pallets by SKU
-  const skuMap = {}; // sku -> [{palletId, qty}]
-  for (const pallet of session.pallets) {
-    for (const s of pallet.skus) {
-      if (!skuMap[s.sku]) skuMap[s.sku] = [];
-      skuMap[s.sku].push({ palletId: pallet.id, qty: s.qty });
+  // Build SKU summary: aggregate qty across all pallets per SKU
+  const skuTotals = {};
+  for (const pallet of (record.pallets || [])) {
+    for (const s of (pallet.skus || [])) {
+      skuTotals[s.sku] = (skuTotals[s.sku] || 0) + s.qty;
     }
   }
+  const skuSummary = Object.entries(skuTotals)
+    .map(([sku, qty]) => `${sku}×${qty}`)
+    .join(' / ');
 
-  const sd = session.slipData;
-  const totalPieces = session.pallets.reduce((sum, p) => sum + (p.totalQty || 0), 0);
-  const copies = ['CARRIER COPY', 'DOCK COPY', 'FILE COPY'];
+  // Format closed timestamp
+  const closedAt = record.closedAt
+    ? new Date(record.closedAt).toLocaleString('en-US', { timeZone: 'America/Chicago' })
+    : '';
 
-  let html = '';
-  for (const copyLabel of copies) {
-    const tableRows = Object.entries(skuMap).map(([sku, entries]) => {
-      const skuTotal = entries.reduce((s, e) => s + e.qty, 0);
-      const palletRows = entries.map(e => `
-        <tr class="pallet-row">
-          <td colspan="2" style="padding-left:18px;font-size:10px;color:#555;">${e.palletId}</td>
-          <td style="text-align:right;font-size:10px;">${e.qty}</td>
-        </tr>
-      `).join('');
-      return `
-        <tr class="sku-group-header">
-          <td colspan="2">${sku}</td>
-          <td></td>
-        </tr>
-        ${palletRows}
-        <tr class="sku-total-row">
-          <td colspan="2" style="text-align:right;font-size:10px;">SKU TOTAL</td>
-          <td style="text-align:right;">${skuTotal}</td>
-        </tr>
-      `;
-    }).join('');
+  // Append row
+  sheet.appendRow([
+    closedAt,
+    record.bol       || '',
+    record.slipId    || '',
+    record.dest      || '',
+    record.carrier   || '',
+    record.trailer   || '',
+    record.shipDate  || '',
+    record.palletCount  || 0,
+    record.totalPieces  || 0,
+    palletIds,
+    skuSummary
+  ]);
 
-    html += `
-      <div class="manifest-copy">
-        <div class="mc-logo">
-          <div class="co">FILTERBUY</div>
-          <div class="tl">BETTER AIR FOR ALL</div>
-        </div>
-        <div class="mc-copy-label">${copyLabel}</div>
-        <div class="mc-title">TRAILER MANIFEST</div>
-        <div class="mc-meta">
-          <span class="k">BOL #</span><span class="v">${sd.bol}</span>
-          <span class="k">Destination</span><span class="v">${sd.dest}</span>
-          <span class="k">Carrier</span><span class="v">${sd.carrier || '—'}</span>
-          <span class="k">Trailer #</span><span class="v">${sd.trailer || '—'}</span>
-          <span class="k">Ship Date</span><span class="v">${sd.shipDateDisplay || sd.shipDate || '—'}</span>
-          <span class="k">Prepared By</span><span class="v">${sd.prepBy || '—'}</span>
-          <span class="k">Closed</span><span class="v">${new Date(session.closedAt).toLocaleString()}</span>
-          <span class="k">Slip ID</span><span class="v" style="font-size:9px;font-family:monospace;">${session.slipId}</span>
-        </div>
-        <div class="mc-barcode">
-          <svg id="mc-bc-${copyLabel.replace(' ','_')}"></svg>
-          <div class="mc-barcode-id">${session.slipId}</div>
-        </div>
-        <table class="mc-sku-table">
-          <thead>
-            <tr><th>SKU</th><th>Pallet</th><th style="text-align:right;">Qty</th></tr>
-          </thead>
-          <tbody>${tableRows}</tbody>
-        </table>
-        <div class="mc-grand-total">
-          <div class="gt-num">${totalPieces}</div>
-          <div class="gt-lbl">Total Pieces</div>
-        </div>
-        <div class="mc-pallet-count">${session.pallets.length} Pallet${session.pallets.length !== 1 ? 's' : ''} Total</div>
-        <div class="mc-sig">
-          <div class="sig-field">Loaded By: ___________________</div>
-          <div class="sig-field">Received By: ___________________</div>
-        </div>
-      </div>
-    `;
+  // Alternate row shading for readability
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1 && lastRow % 2 === 0) {
+    sheet.getRange(lastRow, 1, 1, HEADERS.length).setBackground('#f0f7f0');
   }
-
-  document.getElementById('print-manifest').innerHTML = html;
-
-  // Render barcodes in each copy
-  requestAnimationFrame(() => {
-    copies.forEach(c => {
-      const id = '#mc-bc-' + c.replace(' ', '_');
-      try {
-        JsBarcode(id, session.slipId, { format: 'CODE128', width: 2, height: 40, displayValue: false, margin: 4 });
-      } catch(e) {}
-    });
-    setTimeout(() => window.print(), 300);
-  });
 }
-
-// ── BOL RECORD PERSISTENCE ──
-function commitBolRecord(sess) {
-  const records = JSON.parse(localStorage.getItem('fb_bol_records') || '[]');
-  if (records.find(r => r.slipId === sess.slipId)) return;
-  const sd = sess.slipData;
-  const record = {
-    slipId:      sess.slipId,
-    bol:         sd.bol,
-    dest:        sd.dest,
-    carrier:     sd.carrier || '',
-    trailer:     sd.trailer || '',
-    shipDate:    sd.shipDate || '',
-    shipDateDisplay: sd.shipDateDisplay || '',
-    prepBy:      sd.prepBy || '',
-    openedAt:    sess.openedAt,
-    closedAt:    sess.closedAt,
-    palletCount: sess.pallets.length,
-    totalPieces: sess.pallets.reduce((s, p) => s + (p.totalQty || 0), 0),
-    pallets:     sess.pallets.map(p => ({
-      id:       p.id,
-      dest:     p.dest,
-      merv:     p.merv || '',
-      mfg:      p.mfg || '',
-      skus:     p.skus || [],
-      totalQty: p.totalQty || 0,
-      loadDate: p.loadDate || '',
-      loadDateDisplay: p.loadDateDisplay || '',
-      unknown:  p.unknown || false
-    })),
-    locked: true
-  };
-  records.push(record);
-  localStorage.setItem('fb_bol_records', JSON.stringify(records));
-}
-
-// ── INIT ──
-restoreUI();
-</script>
-</body>
-</html>
