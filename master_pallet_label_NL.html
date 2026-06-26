@@ -89,6 +89,27 @@
   }
   .add-sku-btn:hover { background: #006628; }
 
+  .sku-row-controls {
+    display: flex; align-items: center; gap: 14px; margin-top: 6px; flex-wrap: wrap;
+  }
+  .pallet-count-wrap {
+    display: flex; align-items: center; gap: 6px;
+    background: #FFF8E1; border: 1px solid #F9A825;
+    border-radius: 4px; padding: 5px 10px;
+  }
+  .pallet-count-wrap label {
+    font-size: 11px; font-weight: bold; color: #7B4F00;
+    text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .pallet-count-input {
+    width: 52px; text-align: center; font-size: 15px; font-weight: bold;
+    padding: 4px 4px; border: 1px solid #F9A825; border-radius: 4px;
+    font-family: monospace; color: #333; background: #fff;
+  }
+  .pallet-count-hint {
+    font-size: 10px; color: #888; font-style: italic; white-space: nowrap;
+  }
+
   .btn-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
   .btn-generate {
     background: #008533; color: #fff; border: none; border-radius: 5px;
@@ -237,7 +258,14 @@
     <div style="margin-bottom:6px;">
       <div class="sku-section-label">SKUs on Pallet</div>
       <div id="sku-rows"></div>
-      <button class="add-sku-btn" onclick="addSkuRow()">+ Add SKU</button>
+      <div class="sku-row-controls">
+        <button class="add-sku-btn" onclick="addSkuRow()">+ Add SKU</button>
+        <div class="pallet-count-wrap">
+          <label for="pallet-count"># of Pallets</label>
+          <input class="pallet-count-input" type="number" id="pallet-count" value="1" min="1" max="50">
+          <span class="pallet-count-hint">same SKUs &amp; qty each</span>
+        </div>
+      </div>
     </div>
 
     <div class="btn-row">
@@ -253,6 +281,7 @@
     <span>Label Preview</span>
     <button class="btn-print" onclick="window.print()">🖨 Print Label</button>
   </div>
+  <div id="multi-print-banner" style="display:none;background:#FFF8E1;border:1px solid #F9A825;padding:8px 16px;font-size:13px;font-weight:bold;color:#7B4F00;text-align:center;letter-spacing:0.5px;"></div>
   <div class="label-wrap">
     <div class="thermal-label" id="the-label"></div>
   </div>
@@ -396,26 +425,65 @@ function generateLabel(reprintPallet) {
   const dest    = document.getElementById('destination').value;
   const mfg     = document.getElementById('mfg-location').value;
   const rawDate = document.getElementById('load-date').value;
+  const palletCount = Math.max(1, parseInt(document.getElementById('pallet-count').value) || 1);
 
-  // Build pallet ID
+  // Build all pallets first so the staged table is complete before we start printing
   const now = new Date();
   const mm  = String(now.getMonth()+1).padStart(2,'0');
   const dd  = String(now.getDate()).padStart(2,'0');
   const yy  = String(now.getFullYear()).slice(-2);
-  const rand = Math.random().toString(36).slice(2,7).toUpperCase();
-  const palletId = `FB-${mm}${dd}${yy}-${rand}`;
-
   const loadDateDisplay = rawDate ? formatDate(rawDate) : '';
 
-  const pallet = { id: palletId, dest, mfg, skus, totalQty, loadDate: rawDate || '', loadDateDisplay, timestamp: now.toISOString() };
-  stagedPallets.push(pallet);
+  const newPallets = [];
+  for (let i = 0; i < palletCount; i++) {
+    const rand = Math.random().toString(36).slice(2,7).toUpperCase();
+    const palletId = `FB-${mm}${dd}${yy}-${rand}`;
+    newPallets.push({ id: palletId, dest, mfg, skus, totalQty, loadDate: rawDate || '', loadDateDisplay, timestamp: now.toISOString() });
+  }
+
+  // Stage all pallets at once
+  stagedPallets.push(...newPallets);
   localStorage.setItem('fb_staged_pallets_nl', JSON.stringify(stagedPallets));
   renderStagedTable();
 
-  renderLabel(pallet, false);
-
-  // Clear form fields except Mfg Location and Load Date
+  // Clear the form immediately so user can prep next batch while printing
   clearFormFields();
+
+  // Print each label sequentially with a small inter-print delay
+  if (palletCount === 1) {
+    renderLabel(newPallets[0], false);
+  } else {
+    printQueue(newPallets, 0);
+  }
+}
+
+// Print labels one at a time using afterprint event to advance the queue
+function printQueue(pallets, idx) {
+  if (idx >= pallets.length) return;
+
+  renderLabel(pallets[idx], false, /*autoPrint=*/false);
+
+  // Show a status banner above the label while multi-printing
+  const banner = document.getElementById('multi-print-banner');
+  if (banner) {
+    banner.textContent = `Printing ${idx + 1} of ${pallets.length}… (${pallets[idx].id})`;
+    banner.style.display = 'block';
+  }
+
+  // Use afterprint to trigger the next label; fallback timeout in case afterprint fires late
+  let advanced = false;
+  function advance() {
+    if (advanced) return;
+    advanced = true;
+    window.removeEventListener('afterprint', advance);
+    if (idx + 1 < pallets.length) {
+      setTimeout(() => printQueue(pallets, idx + 1), 300);
+    } else {
+      if (banner) banner.style.display = 'none';
+    }
+  }
+  window.addEventListener('afterprint', advance, { once: true });
+  setTimeout(() => window.print(), 350);
 }
 
 function formatDate(rawDate) {
@@ -427,7 +495,8 @@ function formatDate(rawDate) {
   return `${days[d.getDay()]}  ${mo}-${dy}-${yr}`;
 }
 
-function renderLabel(pallet, isReprint) {
+function renderLabel(pallet, isReprint, autoPrint) {
+  if (autoPrint === undefined) autoPrint = true;
   const label = document.getElementById('the-label');
   const reprintBanner = isReprint ? `<div style="text-align:center;font-size:9px;font-weight:bold;color:#c0392b;letter-spacing:1px;margin-bottom:4px;">⚠ REPRINT — LOST/DAMAGED</div>` : '';
 
@@ -473,7 +542,7 @@ function renderLabel(pallet, isReprint) {
   document.getElementById('label-preview').scrollIntoView({ behavior: 'smooth' });
 
   // Auto-trigger print
-  setTimeout(() => window.print(), 350);
+  if (autoPrint) setTimeout(() => window.print(), 350);
 }
 
 function fitText(elId, maxWidth, maxFont, minFont) {
@@ -487,6 +556,7 @@ function fitText(elId, maxWidth, maxFont, minFont) {
 // ── CLEAR ── (only dest, SKU rows, qty — not Mfg Location or Load Date)
 function clearFormFields() {
   document.getElementById('destination').selectedIndex = 0;
+  document.getElementById('pallet-count').value = 1;
   // Remove all SKU rows and add one fresh blank
   document.getElementById('sku-rows').innerHTML = '';
   addSkuRow();
